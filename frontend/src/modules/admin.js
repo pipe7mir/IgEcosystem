@@ -228,38 +228,38 @@ const adminController = {
 
       // Cargar módulo según vista
       switch (viewName) {
-        case 'usuarios':
-          content.innerHTML = await renderUsuarios();
-          await initUsuarios();
-          break;
+      case 'usuarios':
+        content.innerHTML = await renderUsuarios();
+        await initUsuarios();
+        break;
 
-        case 'anuncios':
-          content.innerHTML = await renderAnuncios();
-          await initAnuncios();
-          break;
+      case 'anuncios':
+        content.innerHTML = await renderAnuncios();
+        await initAnuncios();
+        break;
 
-        case 'solicitudes':
-          content.innerHTML = await renderSolicitudes();
-          await initSolicitudes();
-          break;
+      case 'solicitudes':
+        content.innerHTML = await renderSolicitudes();
+        await initSolicitudes();
+        break;
 
-        case 'inventario': {
-          // Importación dinámica del gestor de inventario
-          const { renderAdminRecursos, initAdminRecursos } = await import('./admin-recursos.js');
-          content.innerHTML = await renderAdminRecursos();
-          await initAdminRecursos();
-          break;
-        }
+      case 'inventario': {
+        // Importación dinámica del gestor de inventario
+        const { renderAdminRecursos, initAdminRecursos } = await import('./admin-recursos.js');
+        content.innerHTML = await renderAdminRecursos();
+        await initAdminRecursos();
+        break;
+      }
 
-        case 'streaming': {
-          const { renderAdminStreaming, initAdminStreaming } = await import('./admin-streaming.js');
-          content.innerHTML = await renderAdminStreaming();
-          await initAdminStreaming();
-          break;
-        }
+      case 'streaming': {
+        const { renderAdminStreaming, initAdminStreaming } = await import('./admin-streaming.js');
+        content.innerHTML = await renderAdminStreaming();
+        await initAdminStreaming();
+        break;
+      }
 
-        default:
-          content.innerHTML = `
+      default:
+        content.innerHTML = `
                         <div class="alert alert-info">
                             <i class="bi bi-info-circle me-2"></i>
                             El módulo <strong>${sanitizeHTML(viewName)}</strong> está en desarrollo.

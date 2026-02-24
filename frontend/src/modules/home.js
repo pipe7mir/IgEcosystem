@@ -17,10 +17,10 @@ let oasisCarouselInstance = null;
 
 // Registrar evento de teclado global para el carrusel (Solo una vez al cargar el módulo)
 document.addEventListener('keydown', (e) => {
-    // Verificar si estamos en el home o el carrusel está en fullscreen
-    if (appState.get('currentModule') === 'home' || document.fullscreenElement?.id === 'oasisCarousel') {
-        homeController.handleKeyboardNav(e);
-    }
+  // Verificar si estamos en el home o el carrusel está en fullscreen
+  if (appState.get('currentModule') === 'home' || document.fullscreenElement?.id === 'oasisCarousel') {
+    homeController.handleKeyboardNav(e);
+  }
 });
 
 /* ==============================================================================
@@ -32,7 +32,7 @@ document.addEventListener('keydown', (e) => {
  * @returns {string} HTML de la página
  */
 export async function renderHome() {
-    return `
+  return `
         <header class="hero-section d-flex align-items-center text-center text-white position-relative">
             <div class="container animate__animated animate__fadeIn position-relative" style="z-index: 2;">
                 <h1 class="display-2 fw-bold mb-2 title-proy">${i18n.t('home.hero_title')}</h1>
@@ -211,51 +211,51 @@ export async function renderHome() {
  * Configura eventos y carga datos dinámicos
  */
 export async function initHomeFunctions() {
-    try {
-        logEvent('home_module_init');
-        appState.set('currentModule', 'home');
+  try {
+    logEvent('home_module_init');
+    appState.set('currentModule', 'home');
 
-        // Registrar navegación
-        eventSystem.register('home-nav-peticiones', () => {
-            window.location.hash = '#peticiones';
-        });
+    // Registrar navegación
+    eventSystem.register('home-nav-peticiones', () => {
+      window.location.hash = '#peticiones';
+    });
 
-        eventSystem.register('home-nav-recursos', () => {
-            window.location.hash = '#recursos';
-        });
+    eventSystem.register('home-nav-recursos', () => {
+      window.location.hash = '#recursos';
+    });
 
-        eventSystem.register('home-nav-admin', () => {
-            window.location.hash = '#auth'; // Entry point to admin
-        });
+    eventSystem.register('home-nav-admin', () => {
+      window.location.hash = '#auth'; // Entry point to admin
+    });
 
-        eventSystem.register('home-nav-external', (element) => {
-            const url = element.dataset.url;
-            if (url) {
-                window.open(url, '_blank', 'noopener,noreferrer');
-            }
-        });
+    eventSystem.register('home-nav-external', (element) => {
+      const url = element.dataset.url;
+      if (url) {
+        window.open(url, '_blank', 'noopener,noreferrer');
+      }
+    });
 
-        // Registrar controles del carrusel
-        eventSystem.register('home-carousel-pause', () => {
-            homeController.toggleCarouselPause();
-        });
+    // Registrar controles del carrusel
+    eventSystem.register('home-carousel-pause', () => {
+      homeController.toggleCarouselPause();
+    });
 
-        eventSystem.register('home-carousel-fullscreen', () => {
-            homeController.enterFullscreen();
-        });
+    eventSystem.register('home-carousel-fullscreen', () => {
+      homeController.enterFullscreen();
+    });
 
-        // Cargar anuncios, eventos y estado del streaming
-        await homeController.loadCarousel();
-        await homeController.loadEvents();
-        await homeController.loadStreamingStatus();
+    // Cargar anuncios, eventos y estado del streaming
+    await homeController.loadCarousel();
+    await homeController.loadEvents();
+    await homeController.loadStreamingStatus();
 
-    } catch (err) {
-        handleError({
-            error: err,
-            context: 'initHomeFunctions',
-            severity: 'warning'
-        });
-    }
+  } catch (err) {
+    handleError({
+      error: err,
+      context: 'initHomeFunctions',
+      severity: 'warning'
+    });
+  }
 }
 
 /* ==============================================================================
@@ -263,33 +263,33 @@ export async function initHomeFunctions() {
    ============================================================================== */
 
 const homeController = {
-    carouselPaused: false,
+  carouselPaused: false,
 
-    /**
+  /**
        * Carga el carrusel de anuncios
        */
-    async loadCarousel() {
-        const container = document.getElementById('cards-container');
-        if (!container) return;
+  async loadCarousel() {
+    const container = document.getElementById('cards-container');
+    if (!container) return;
 
-        try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/announcements?limit=10`);
-            if (!response.ok) throw new Error('Error al cargar anuncios');
-            const anuncios = await response.json();
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/announcements?limit=10`);
+      if (!response.ok) throw new Error('Error al cargar anuncios');
+      const anuncios = await response.json();
 
-            if (!anuncios || anuncios.length === 0) {
-                container.innerHTML = `
+      if (!anuncios || anuncios.length === 0) {
+        container.innerHTML = `
                         <div class="carousel-item active">
                             <div class="text-center p-5">
                                 <i class="bi bi-inbox display-1 text-muted"></i>
                                 <p class="text-muted mt-3">${i18n.t('home.no_anuncios')}</p>
                             </div>
                         </div>`;
-                return;
-            }
+        return;
+      }
 
-            // Renderizar carrusel
-            container.innerHTML = anuncios.map((anuncio, index) => `
+      // Renderizar carrusel
+      container.innerHTML = anuncios.map((anuncio, index) => `
                     <div class="carousel-item ${index === 0 ? 'active' : ''}">
                         <div class="proyectable-poster">
                             <div class="poster-content-img" style="background-image: url('${sanitizeHTML(anuncio.image_url || '')}')"></div>
@@ -308,62 +308,62 @@ const homeController = {
                         </div>
                     </div>`).join('');
 
-            // Inicializar carrusel
-            const carouselEl = document.querySelector('#oasisCarousel');
-            if (carouselEl) {
-                if (oasisCarouselInstance) oasisCarouselInstance.dispose();
-                // eslint-disable-next-line no-undef
-                oasisCarouselInstance = new bootstrap.Carousel(carouselEl, {
-                    ride: 'carousel',
-                    interval: 7000,
-                    pause: 'hover'
-                });
-            }
+      // Inicializar carrusel
+      const carouselEl = document.querySelector('#oasisCarousel');
+      if (carouselEl) {
+        if (oasisCarouselInstance) oasisCarouselInstance.dispose();
+        // eslint-disable-next-line no-undef
+        oasisCarouselInstance = new bootstrap.Carousel(carouselEl, {
+          ride: 'carousel',
+          interval: 7000,
+          pause: 'hover'
+        });
+      }
 
-            logEvent('home_carousel_loaded', { count: anuncios.length });
+      logEvent('home_carousel_loaded', { count: anuncios.length });
 
-        } catch (err) {
-            handleError({
-                error: err,
-                context: 'loadCarousel',
-                userMessage: 'Error al cargar anuncios'
-            });
-            container.innerHTML = `
+    } catch (err) {
+      handleError({
+        error: err,
+        context: 'loadCarousel',
+        userMessage: 'Error al cargar anuncios'
+      });
+      container.innerHTML = `
             <div class="text-center p-5 text-danger">Error cargando anuncios</div>
             `;
-        }
-    },
+    }
+  },
 
-    toggleCarouselPause() {
-        // ... same logic ...
-    },
+  toggleCarouselPause() {
+    // ... same logic ...
+  },
 
-    enterFullscreen() {
-        // ... same logic ...
-    },
+  enterFullscreen() {
+    // ... same logic ...
+  },
 
-    handleKeyboardNav(e) {
-        // ... same logic ...
-    },
+  handleKeyboardNav(e) {
+    // ... same logic ...
+  },
 
-    async loadEvents() {
-        const feed = document.getElementById('events-feed');
-        if (!feed) return;
+  async loadEvents() {
+    const feed = document.getElementById('events-feed');
+    if (!feed) return;
 
-        try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/announcements?limit=5`);
-            if (!response.ok) throw new Error('Error al cargar eventos');
-            let eventos = await response.json();
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/announcements?limit=5`);
+      if (!response.ok) throw new Error('Error al cargar eventos');
+      let eventos = await response.json();
 
-            // Filter functionality client-side for now
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            eventos = eventos.filter(e => e.event_date && new Date(e.event_date) >= today)
-                .sort((a, b) => new Date(a.event_date) - new Date(b.event_date))
-                .slice(0, 5);
+      // Filter functionality client-side for now
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      eventos = eventos.filter(e => e.event_date && new Date(e.event_date) >= today)
+        .sort((a, b) => new Date(a.event_date) - new Date(b.event_date))
+        .slice(0, 5);
 
-            if (!eventos || eventos.length === 0) {
-                feed.innerHTML = `
+      if (!eventos || eventos.length === 0) {
+        feed.innerHTML = `
             <div class="card-header bg-light border-0 pt-4 px-4">
                 <h3 class="fw-bold text-primary mb-1">${i18n.t('home.events_title')}</h3>
             </div>
@@ -371,18 +371,18 @@ const homeController = {
                 <i class="bi bi-calendar-check display-1 opacity-25"></i>
                 <p class="mt-3">${i18n.t('home.no_events')}</p>
             </div>`;
-                return;
-            }
+        return;
+      }
 
-            const eventosHTML = eventos.map(evento => {
-                const fecha = new Date(evento.event_date);
-                const fechaFormato = fecha.toLocaleDateString(i18n.locale === 'es' ? 'es-ES' : 'en-US', {
-                    weekday: 'short',
-                    day: 'numeric',
-                    month: 'short'
-                });
+      const eventosHTML = eventos.map(evento => {
+        const fecha = new Date(evento.event_date);
+        const fechaFormato = fecha.toLocaleDateString(i18n.locale === 'es' ? 'es-ES' : 'en-US', {
+          weekday: 'short',
+          day: 'numeric',
+          month: 'short'
+        });
 
-                return `
+        return `
                     <div class="border-bottom p-3">
                         <div class="d-flex gap-3">
                             <div class="text-center" style="min-width: 50px;">
@@ -397,9 +397,9 @@ const homeController = {
                             </div>
                         </div>
                     </div>`;
-            }).join('');
+      }).join('');
 
-            feed.innerHTML = `
+      feed.innerHTML = `
                 <div class="card-header bg-light border-0 pt-4 px-4">
                     <h3 class="fw-bold text-primary mb-1">${i18n.t('home.events_title')}</h3>
                 </div>
@@ -407,67 +407,67 @@ const homeController = {
                     ${eventosHTML}
                 </div>`;
 
-        } catch (err) {
-            feed.innerHTML = `<div class="p-3 text-danger">Error loading events</div>`;
-        }
-    },
+    } catch (err) {
+      feed.innerHTML = '<div class="p-3 text-danger">Error loading events</div>';
+    }
+  },
 
-    /**
+  /**
      * Carga el estado del streaming y configura el reproductor
      */
-    async loadStreamingStatus() {
-        try {
-            const container = document.getElementById('streaming-container');
-            const player = document.getElementById('main-player');
-            const indicator = document.getElementById('live-indicator');
+  async loadStreamingStatus() {
+    try {
+      const container = document.getElementById('streaming-container');
+      const player = document.getElementById('main-player');
+      const indicator = document.getElementById('live-indicator');
 
-            if (!container || !player) return;
+      if (!container || !player) return;
 
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/settings`);
-            if (!response.ok) return; // Silent fail
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/settings`);
+      if (!response.ok) return; // Silent fail
 
-            const settings = await response.json();
-            const isLive = settings.stream_is_live === '1' || settings.stream_is_live === true;
-            const liveVideoId = settings.youtube_live_video_id;
-            const channelId = settings.youtube_channel_id;
-            const playlistId = settings.youtube_playlist_id;
+      const settings = await response.json();
+      const isLive = settings.stream_is_live === '1' || settings.stream_is_live === true;
+      const liveVideoId = settings.youtube_live_video_id;
+      const channelId = settings.youtube_channel_id;
+      const playlistId = settings.youtube_playlist_id;
 
-            let src = '';
-            let showPlayer = false;
+      let src = '';
+      let showPlayer = false;
 
-            if (isLive && liveVideoId) {
-                // MODO EN VIVO
-                src = `https://www.youtube.com/embed/${liveVideoId}?autoplay=1&rel=0&modestbranding=1`;
-                showPlayer = true;
-                indicator.style.display = 'block';
-                // Añadir clase de brillo al contenedor
-                container.querySelector('.ratio').classList.add('shadow-dance'); // Asumiendo que existe o se añade CSS
-            } else if (playlistId) {
-                // MODO OFFLINE (Playlist)
-                src = `https://www.youtube.com/embed?listType=playlist&list=${playlistId}&rel=0&modestbranding=1`;
-                showPlayer = true;
-                indicator.style.display = 'none';
-            } else if (channelId) {
-                // MODO OFFLINE (Canal) - Intento de fallback
-                // Sin API key, user_uploads no siempre funciona bien solo con channel ID directo si no es usuario legacy.
-                // Intentamos con listType=user_uploads&list=UU... (si supiéramos el ID de uploads).
-                // Por ahora, mostrar nada o dejar vacío si no hay playlist.
-                // Opcional: Mostrar último video si tuviéramos backend logic.
-                // Dejaremos visible solo si hay playlist configurada para garantizar experiencia.
-            }
+      if (isLive && liveVideoId) {
+        // MODO EN VIVO
+        src = `https://www.youtube.com/embed/${liveVideoId}?autoplay=1&rel=0&modestbranding=1`;
+        showPlayer = true;
+        indicator.style.display = 'block';
+        // Añadir clase de brillo al contenedor
+        container.querySelector('.ratio').classList.add('shadow-dance'); // Asumiendo que existe o se añade CSS
+      } else if (playlistId) {
+        // MODO OFFLINE (Playlist)
+        src = `https://www.youtube.com/embed?listType=playlist&list=${playlistId}&rel=0&modestbranding=1`;
+        showPlayer = true;
+        indicator.style.display = 'none';
+      } else if (channelId) {
+        // MODO OFFLINE (Canal) - Intento de fallback
+        // Sin API key, user_uploads no siempre funciona bien solo con channel ID directo si no es usuario legacy.
+        // Intentamos con listType=user_uploads&list=UU... (si supiéramos el ID de uploads).
+        // Por ahora, mostrar nada o dejar vacío si no hay playlist.
+        // Opcional: Mostrar último video si tuviéramos backend logic.
+        // Dejaremos visible solo si hay playlist configurada para garantizar experiencia.
+      }
 
-            if (showPlayer && src) {
-                player.src = src;
-                container.classList.remove('d-none');
-                container.classList.add('animate__fadeInUp');
-            } else {
-                container.classList.add('d-none');
-            }
+      if (showPlayer && src) {
+        player.src = src;
+        container.classList.remove('d-none');
+        container.classList.add('animate__fadeInUp');
+      } else {
+        container.classList.add('d-none');
+      }
 
-        } catch (error) {
-            console.warn('Error checking streaming status', error);
-        }
+    } catch (error) {
+      console.warn('Error checking streaming status', error);
     }
+  }
 };
 
 export { homeController };
