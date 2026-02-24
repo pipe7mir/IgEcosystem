@@ -30,5 +30,5 @@ RUN mkdir -p storage/logs storage/framework/{cache,sessions,views} bootstrap/cac
 # Expose port (Railway uses PORT env var)
 EXPOSE 8080
 
-# Start server
-CMD php artisan config:cache && php artisan route:cache && php -S 0.0.0.0:${PORT:-8080} -t public
+# Start server on all interfaces
+CMD php -S 0.0.0.0:${PORT:-8080} -t public
