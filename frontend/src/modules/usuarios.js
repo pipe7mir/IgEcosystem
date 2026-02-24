@@ -7,6 +7,7 @@
 import { handleError, sanitizeHTML, logEvent } from '../common/errorHandler.js';
 import { eventSystem } from '../common/eventDelegation.js';
 import { appState } from '../common/stateManager.js';
+import { showToast } from '../common/uiHelper.js';
 
 /* ==============================================================================
    RENDERIZADO

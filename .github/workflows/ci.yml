@@ -23,14 +23,17 @@ jobs:
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
       - name: Install PHP dependencies
         run: composer install --no-progress --no-suggest --prefer-dist
+        working-directory: backend
       - name: Prepare SQLite DB
         run: |
           mkdir -p database
           touch database/database.sqlite
           php artisan key:generate
           php artisan migrate --force
+        working-directory: backend
       - name: Run PHP unit tests
         run: vendor/bin/phpunit --testdox || php artisan test --no-interaction
+        working-directory: backend
 
   frontend:
     name: Frontend (Node)
