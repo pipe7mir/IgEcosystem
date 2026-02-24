@@ -240,6 +240,7 @@ const authController = {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify({
           username: user,
           password: pass
@@ -348,6 +349,7 @@ const authController = {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify({
           username,
           email,

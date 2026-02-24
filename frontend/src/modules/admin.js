@@ -353,7 +353,10 @@ const adminController = {
 
         const apiUrl = import.meta.env.VITE_API_URL;
         try {
-          await fetch(`${apiUrl}/logout`, { method: 'POST' });
+          await fetch(`${apiUrl}/logout`, { 
+            method: 'POST',
+            credentials: 'include'
+          });
         } catch (e) { console.warn('Logout API failed', e); }
 
         localStorage.removeItem('oasis_session');
