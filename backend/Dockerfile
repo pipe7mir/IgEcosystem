@@ -21,8 +21,11 @@ COPY . .
 # Install dependencies
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
+# Make start script executable
+RUN chmod +x start.sh
+
 # Expose port
 EXPOSE 8080
 
-# Use Procfile
-CMD exec $(cat Procfile | grep '^web:' | cut -d' ' -f2-)
+# Run start script
+CMD ["./start.sh"]
