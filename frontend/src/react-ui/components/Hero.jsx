@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import apiClient from '../../api/client';
 import { theme } from '../styles/theme';
 import Button from './Button';
-import T1 from '../img/logos/T1.png';
+import T1 from '../../img/logos/T1.png';
 
 /**
  * Componente Hero (Cartelera Dinámica)
