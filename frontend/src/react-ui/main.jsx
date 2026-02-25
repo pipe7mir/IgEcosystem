@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import ErrorBoundary from './components/ErrorBoundary';
 import '../styles/custom.css';
+import { AuthProvider } from '../context/AuthContext';
 
 const rootElement = document.getElementById('root');
 
@@ -10,7 +11,9 @@ if (rootElement) {
     ReactDOM.createRoot(rootElement).render(
         <React.StrictMode>
             <ErrorBoundary>
-                <App />
+                <AuthProvider>
+                    <App />
+                </AuthProvider>
             </ErrorBoundary>
         </React.StrictMode>
     );

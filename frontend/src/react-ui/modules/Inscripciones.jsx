@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import apiClient from '../../api/client';
+import { supabase } from '../../lib/supabaseClient';
 import { theme } from '../styles/theme';
 import GlassCard from '../components/GlassCard';
 import FormViewer from '../components/FormViewer';
@@ -19,9 +19,11 @@ const Inscripciones = () => {
     const [finished, setFinished] = useState(false);
 
     useEffect(() => {
-        // Obtenemos solo los formularios que el administrador ha marcado como 'is_active'
-        apiClient.get('/event-forms')
-            .then(res => setForms(res.data.filter(f => f.is_active)))
+        supabase.from('event_forms').select('*').eq('is_active', true)
+            .then(({ data, error }) => {
+                if (error) throw error;
+                setForms(data);
+            })
             .catch(e => console.error('Error al cargar eventos:', e))
             .finally(() => setLoading(false));
     }, []);

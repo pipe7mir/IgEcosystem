@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import apiClient from '../api/client';
-import { theme } from '../react-ui/styles/theme';
-import GlassCard from '../react-ui/components/GlassCard';
+import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
+    const { signIn } = useAuth();
     const [formData, setFormData] = useState({ username: '', password: '' });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -16,19 +15,19 @@ const Login = () => {
         setError('');
 
         try {
-            // "Credentials stored in the system" - usually implies standard login
-            const response = await apiClient.post('/login', formData);
+            const { data, error: authError } = await signIn({
+                email: formData.username,
+                password: formData.password
+            });
 
-            if (response.data.success) {
-                // Store token
-                localStorage.setItem('authToken', response.data.token);
-                localStorage.setItem('user', JSON.stringify(response.data.user));
+            if (authError) throw authError;
 
+            if (data?.session) {
                 // Redirect to Admin Dashboard
                 navigate('/admin/solicitudes');
             }
         } catch (err) {
-            setError(err.response?.data?.message || 'Error al iniciar sesión');
+            setError(err.message || 'Error al iniciar sesión');
         } finally {
             setLoading(false);
         }

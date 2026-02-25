@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import apiClient from '../../api/client';
+import { supabase } from '../../lib/supabaseClient';
 import { theme } from '../styles/theme';
 import Button from './Button';
 
@@ -17,20 +17,33 @@ const FormViewer = ({ form, onComplete }) => {
         setSubmitting(true);
         setError(null);
 
-        const data = new FormData();
-        data.append('event_form_id', form.id);
-
-        Object.keys(formData).forEach(key => {
-            data.append(key, formData[key]);
-        });
-
         try {
-            await apiClient.post('/event-submissions', data, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
+            const submissionData = { ...formData };
+
+            // Handle file uploads
+            for (const field of form.fields) {
+                if (field.type === 'file' && formData[field.label] instanceof File) {
+                    const file = formData[field.label];
+                    const fileName = `submissions/${form.id}/${Date.now()}-${file.name}`;
+                    const { error: uploadError } = await supabase.storage
+                        .from('media')
+                        .upload(fileName, file);
+
+                    if (uploadError) throw uploadError;
+
+                    submissionData[field.label] = supabase.storage.from('media').getPublicUrl(fileName).data.publicUrl;
+                }
+            }
+
+            const { error: insertError } = await supabase.from('event_submissions').insert([
+                { event_form_id: form.id, data: submissionData }
+            ]);
+
+            if (insertError) throw insertError;
+
             onComplete && onComplete();
         } catch (e) {
-            setError(e.response?.data?.message || 'Error al enviar la inscripción. Revisa que todos los campos obligatorios estén llenos.');
+            setError(e.message || 'Error al enviar la inscripción. Revisa que todos los campos obligatorios estén llenos.');
         } finally {
             setSubmitting(false);
         }

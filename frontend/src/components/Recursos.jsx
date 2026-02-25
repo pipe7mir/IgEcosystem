@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import apiClient from '../api/client';
+import { supabase } from '../lib/supabaseClient';
 import { theme } from '../react-ui/styles/theme';
 
 const Recursos = () => {
@@ -22,8 +22,9 @@ const Recursos = () => {
 
     const fetchResources = async () => {
         try {
-            const response = await apiClient.get('/resources');
-            setResources(response.data);
+            const { data, error } = await supabase.from('resources').select('*');
+            if (error) throw error;
+            setResources(data);
         } catch (err) {
             setError('No pudimos cargar los recursos.');
         } finally {

@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import apiClient from '../api/client';
+import { supabase } from '../lib/supabaseClient';
 import { theme } from '../react-ui/styles/theme';
 import Draggable from 'react-draggable';
 
@@ -336,7 +336,11 @@ const AdminAnnouncements = () => {
     }, []);
 
     const fetchAnnouncements = async () => {
-        try { const res = await apiClient.get('/announcements'); setAnnouncements(Array.isArray(res.data) ? res.data : []); }
+        try {
+            const { data, error } = await supabase.from('announcements').select('*').order('created_at', { ascending: false });
+            if (error) throw error;
+            setAnnouncements(Array.isArray(data) ? data : []);
+        }
         catch (e) { console.error(e); }
     };
 
@@ -677,22 +681,37 @@ const AdminAnnouncements = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsSubmitting(true);
-        const payload = new FormData();
-        payload.append('title', formData.title);
-        payload.append('content', formData.content);
-        payload.append('tag', formData.tag);
-        payload.append('date', formData.date);
+
         try {
             const canvas = await composeCanvas();
             const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.93));
-            payload.append('image_file', new File([blob], `ann-${Date.now()}.jpg`, { type: 'image/jpeg' }));
-            const cfg = { headers: { 'Content-Type': 'multipart/form-data' } };
+            const fileName = `ann-${Date.now()}.jpg`;
+
+            // Upload image to Supabase Storage
+            const { data: uploadData, error: uploadError } = await supabase.storage
+                .from('announcements')
+                .upload(fileName, blob, { contentType: 'image/jpeg' });
+
+            if (uploadError) throw uploadError;
+
+            const imageUrl = supabase.storage.from('announcements').getPublicUrl(fileName).data.publicUrl;
+
+            const announcementData = {
+                title: formData.title,
+                content: formData.content,
+                tag: formData.tag,
+                date: formData.date,
+                image_url: imageUrl
+            };
+
             if (formData.id) {
-                payload.append('_method', 'PUT');
-                await apiClient.post(`/announcements/${formData.id}`, payload, cfg);
+                const { error } = await supabase.from('announcements').update(announcementData).eq('id', formData.id);
+                if (error) throw error;
             } else {
-                await apiClient.post('/announcements', payload, cfg);
+                const { error } = await supabase.from('announcements').insert([announcementData]);
+                if (error) throw error;
             }
+
             fetchAnnouncements(); setShowForm(false); resetForm();
         } catch (err) { alert('Error: ' + err.message); }
         finally { setIsSubmitting(false); }
@@ -707,7 +726,11 @@ const AdminAnnouncements = () => {
 
     const handleDelete = async (id) => {
         if (!window.confirm('¿Eliminar?')) return;
-        try { await apiClient.delete(`/announcements/${id}`); fetchAnnouncements(); } catch { alert('Error'); }
+        try {
+            const { error } = await supabase.from('announcements').delete().eq('id', id);
+            if (error) throw error;
+            fetchAnnouncements();
+        } catch { alert('Error'); }
     };
 
     const resetForm = () => {

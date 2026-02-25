@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import apiClient from '../api/client';
+import { supabase } from '../lib/supabaseClient';
 import { theme } from '../react-ui/styles/theme';
 
 const AdminLive = () => {
@@ -34,20 +34,19 @@ const AdminLive = () => {
         if (!file) return;
 
         setUploading(true);
-        const formData = new FormData();
-        formData.append('file', file);
-
         try {
-            const res = await apiClient.post('/upload', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
-            // Assuming response is { url: '/storage/uploads/...' }
-            if (res.data.url) {
-                handleChange('bg_image', res.data.url);
-            }
+            const fileName = `${Date.now()}-${file.name}`;
+            const { data: uploadData, error: uploadError } = await supabase.storage
+                .from('media')
+                .upload(fileName, file);
+
+            if (uploadError) throw uploadError;
+
+            const imageUrl = supabase.storage.from('media').getPublicUrl(fileName).data.publicUrl;
+            handleChange('bg_image', imageUrl);
         } catch (error) {
             console.error(error);
-            alert('Error al subir imagen: ' + (error.response?.data?.message || error.message));
+            alert('Error al subir imagen: ' + error.message);
         } finally {
             setUploading(false);
         }
@@ -60,8 +59,18 @@ const AdminLive = () => {
     const fetchSettings = async () => {
         setLoading(true);
         try {
-            const res = await apiClient.get('/live/settings');
-            setSettings(res.data);
+            const { data, error } = await supabase.from('settings').select('*');
+            if (error) throw error;
+            const settingsObj = {};
+            data.forEach(s => settingsObj[s.key] = s.value);
+
+            // Only update relevant keys for this module
+            const liveKeys = Object.keys(settings);
+            const filtered = {};
+            liveKeys.forEach(k => {
+                if (settingsObj[k] !== undefined) filtered[k] = settingsObj[k];
+            });
+            setSettings(prev => ({ ...prev, ...filtered }));
         } catch (error) {
             console.error(error);
         } finally {
@@ -76,7 +85,9 @@ const AdminLive = () => {
     const handleSave = async () => {
         setSaving(true);
         try {
-            await apiClient.post('/live/settings', settings);
+            const updates = Object.entries(settings).map(([key, value]) => ({ key, value }));
+            const { error } = await supabase.from('settings').upsert(updates, { onConflict: 'key' });
+            if (error) throw error;
             alert('Configuración guardada correctamente');
         } catch (error) {
             alert('Error al guardar: ' + error.message);

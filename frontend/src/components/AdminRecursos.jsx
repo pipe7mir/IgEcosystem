@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import apiClient from '../api/client';
+import { supabase } from '../lib/supabaseClient';
 import { theme } from '../react-ui/styles/theme';
 
 const AdminRecursos = () => {
@@ -32,8 +32,9 @@ const AdminRecursos = () => {
 
     const fetchResources = async () => {
         try {
-            const res = await apiClient.get('/resources');
-            setResources(res.data);
+            const { data, error } = await supabase.from('resources').select('*');
+            if (error) throw error;
+            setResources(data);
         } catch (error) {
             console.error(error);
         }
@@ -42,11 +43,8 @@ const AdminRecursos = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            if (formData.id) {
-                await apiClient.put(`/resources/${formData.id}`, formData);
-            } else {
-                await apiClient.post('/resources', formData);
-            }
+            const { error } = await supabase.from('resources').upsert([formData]);
+            if (error) throw error;
             fetchResources();
             setShowForm(false);
             resetForm();
@@ -58,7 +56,8 @@ const AdminRecursos = () => {
     const handleDelete = async (id) => {
         if (!window.confirm('¿Eliminar este recurso?')) return;
         try {
-            await apiClient.delete(`/resources/${id}`);
+            const { error } = await supabase.from('resources').delete().eq('id', id);
+            if (error) throw error;
             fetchResources();
         } catch (error) {
             alert('Error al eliminar');

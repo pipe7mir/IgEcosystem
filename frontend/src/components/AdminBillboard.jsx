@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import apiClient from '../api/client';
+import { supabase } from '../lib/supabaseClient';
 import GlassCard from '../react-ui/components/GlassCard';
 import Button from '../react-ui/components/Button';
 import { theme } from '../react-ui/styles/theme';
@@ -37,8 +37,9 @@ const AdminBillboard = () => {
     const fetchBillboards = async () => {
         try {
             setLoading(true);
-            const res = await apiClient.get('/admin/billboards');
-            setBillboards(Array.isArray(res.data) ? res.data : []);
+            const { data, error } = await supabase.from('billboards').select('*').order('order', { ascending: true });
+            if (error) throw error;
+            setBillboards(data || []);
         } catch (e) {
             console.error('Error al cargar la cartelera:', e);
         } finally {
@@ -103,17 +104,24 @@ const AdminBillboard = () => {
         }
 
         try {
-            if (editingItem) {
-                // Laravel requiere que los PUT con archivos se envíen vía POST con el parámetro _method=PUT
-                data.append('_method', 'PUT');
-                await apiClient.post(`/admin/billboards/${editingItem.id}`, data, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
-                });
-            } else {
-                await apiClient.post('/admin/billboards', data, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
-                });
+            let mediaUrl = formData.media_url;
+
+            if (selectedFile) {
+                const fileName = `billboard/${Date.now()}-${selectedFile.name}`;
+                const { error: uploadError } = await supabase.storage
+                    .from('media')
+                    .upload(fileName, selectedFile);
+                if (uploadError) throw uploadError;
+
+                mediaUrl = supabase.storage.from('media').getPublicUrl(fileName).data.publicUrl;
             }
+
+            const itemToSave = { ...formData, media_url: mediaUrl };
+            const { error } = await supabase.from('billboards').upsert([
+                editingItem ? { ...itemToSave, id: editingItem.id } : itemToSave
+            ]);
+
+            if (error) throw error;
             fetchBillboards();
             handleReset();
             alert('¡Guardado exitosamente!');
@@ -129,7 +137,8 @@ const AdminBillboard = () => {
     const handleDelete = async (id) => {
         if (!window.confirm('¿Estás seguro de eliminar este elemento?')) return;
         try {
-            await apiClient.delete(`/admin/billboards/${id}`);
+            const { error } = await supabase.from('billboards').delete().eq('id', id);
+            if (error) throw error;
             fetchBillboards();
         } catch (e) {
             console.error('Error al eliminar:', e);

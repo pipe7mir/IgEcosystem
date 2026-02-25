@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 // CORRECCIÓN: Esta ruta ahora apunta correctamente al archivo dentro de la carpeta frontend
-import apiClient from '../../api/client';
+import { supabase } from '../../lib/supabaseClient';
 import { theme } from '../styles/theme';
 import Button from './Button';
 import T1 from '../../img/logos/T1.png';
@@ -37,10 +37,9 @@ const Hero = () => {
 
     const fetchBillboards = async () => {
         try {
-            const res = await apiClient.get('/billboards');
-            // Solo mostramos lo que el administrador marcó como activo
-            const data = Array.isArray(res.data) ? res.data : [];
-            const activeItems = data.filter(b => b.is_active);
+            const { data, error } = await supabase.from('billboards').select('*');
+            if (error) throw error;
+            const activeItems = (data || []).filter(b => b.is_active);
             setBillboards(activeItems);
         } catch (e) {
             console.error('Error al cargar la cartelera:', e);

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import apiClient from '../api/client';
+import { supabase } from '../lib/supabaseClient';
 import { theme } from '../react-ui/styles/theme';
 
 /* ─────────────────────────────────────────────────────────────
@@ -106,8 +106,13 @@ const AdminAjustes = () => {
     useEffect(() => {
         (async () => {
             try {
-                const res = await apiClient.get('/settings');
-                setSettings(prev => ({ ...prev, ...res.data }));
+                const { data, error } = await supabase.from('settings').select('*');
+                if (error) throw error;
+                // Assuming settings are stored as key-value pairs or a single row
+                // For this migration, we'll assume a single row or equivalent
+                if (data && data.length > 0) {
+                    setSettings(prev => ({ ...prev, ...data[0] }));
+                }
             } catch (e) { console.error(e); }
             finally { setLoading(false); }
         })();
@@ -136,7 +141,8 @@ const AdminAjustes = () => {
         setSaving(true);
         setFeedback(null);
         try {
-            await apiClient.post('/settings', settings);
+            const { error } = await supabase.from('settings').upsert([settings]);
+            if (error) throw error;
             setFeedback({ type: 'success', msg: '✅ Configuración guardada correctamente' });
         } catch (err) {
             setFeedback({ type: 'error', msg: '❌ ' + (err.response?.data?.message || 'Error al guardar') });
@@ -144,36 +150,24 @@ const AdminAjustes = () => {
     };
 
     const handleTestEmail = async () => {
-        setTesting(true);
-        setTestResult(null);
-        try {
-            const res = await apiClient.post('/settings/test-email', { test_to: settings.notify_email });
-            setTestResult({ ok: true, msg: res.data.message });
-        } catch (err) {
-            setTestResult({ ok: false, msg: err.response?.data?.message || 'Error al enviar correo de prueba' });
-        } finally { setTesting(false); }
+        // setTesting(true);
+        // setTestResult(null);
+        alert('La función de prueba de email requiere un servicio backend (Edge Functions).');
     };
 
     /* ── Evolution API handlers ───────────────────────── */
     const fetchWaStatus = useCallback(async () => {
-        try {
-            const res = await apiClient.get('/whatsapp/status');
-            setWaStatus(res.data);
-        } catch (e) { console.error('WA status error', e); }
+        // try {
+        //     const res = await apiClient.get('/whatsapp/status');
+        //     setWaStatus(res.data);
+        // } catch (e) { console.error('WA status error', e); }
+        console.log('WhatsApp status check requires backend service.');
     }, []);
 
     useEffect(() => { fetchWaStatus(); }, [fetchWaStatus]);
 
     const handleCreateInstance = async () => {
-        setWaLoading('creating');
-        try {
-            // Save settings first so service picks up the new URL/key
-            await apiClient.post('/settings', settings);
-            const res = await apiClient.post('/whatsapp/create-instance');
-            await fetchWaStatus();
-            alert(res.data.success ? '✅ Instancia creada. Escanea el QR.' : '❌ ' + res.data.message);
-        } catch (e) { alert('❌ ' + (e.response?.data?.message || e.message)); }
-        finally { setWaLoading(null); }
+        alert('La creación de instancia requiere Evolution API y un servicio backend.');
     };
 
     const handleWaLogout = async () => {

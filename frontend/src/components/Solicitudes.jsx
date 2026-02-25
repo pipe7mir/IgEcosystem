@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import apiClient from '../api/client';
+import { supabase } from '../lib/supabaseClient';
 import { theme } from '../react-ui/styles/theme';
 
 /* ── Status config ─────────────────────────────────── */
@@ -82,8 +82,9 @@ const Solicitudes = () => {
     const fetchRequests = async () => {
         try {
             setLoading(true);
-            const res = await apiClient.get('/requests');
-            setRequests(res.data);
+            const { data, error } = await supabase.from('requests').select('*').order('created_at', { ascending: false });
+            if (error) throw error;
+            setRequests(data);
         } catch (e) { console.error(e); }
         finally { setLoading(false); }
     };
@@ -92,7 +93,8 @@ const Solicitudes = () => {
     const handleStatusChange = async (id, newStatus) => {
         setActionLoading('status');
         try {
-            await apiClient.patch(`/requests/${id}/status`, { status: newStatus, notes });
+            const { error } = await supabase.from('requests').update({ status: newStatus, response: notes }).eq('id', id);
+            if (error) throw error;
             setSelected(prev => prev ? { ...prev, status: newStatus } : prev);
             setActionStatus(`✅ Estado actualizado a "${STATUS_CONFIG[newStatus]?.label}"`);
             await fetchRequests();
@@ -104,14 +106,15 @@ const Solicitudes = () => {
     /* ── Send Email ────────────────────────────────── */
     const handleSendEmail = async () => {
         if (!selected) return;
-        setActionLoading('email');
-        try {
-            const res = await apiClient.post(`/requests/${selected.id}/send-email`, { notes });
-            setActionStatus(`✅ ${res.data.message}`);
-        } catch (e) {
-            const msg = e.response?.data?.message || 'Error al enviar correo';
-            setActionStatus(`❌ ${msg}`);
-        } finally { setActionLoading(null); }
+        // setActionLoading('email');
+        // try {
+        //     const res = await apiClient.post(`/requests/${selected.id}/send-email`, { notes });
+        //     setActionStatus(`✅ ${res.data.message}`);
+        // } catch (e) {
+        //     const msg = e.response?.data?.message || 'Error al enviar correo';
+        //     setActionStatus(`❌ ${msg}`);
+        // } finally { setActionLoading(null); }
+        alert('El envío de email requiere un servicio backend (Edge Functions). Se recomienda usar WhatsApp.');
     };
 
     /* ── WhatsApp link ─────────────────────────────── */
@@ -119,11 +122,15 @@ const Solicitudes = () => {
         if (!selected) return;
         setActionLoading('whatsapp');
         try {
-            const res = await apiClient.get(`/requests/${selected.id}/whatsapp-link`, { params: { notes } });
-            setWaModal(res.data);
+            const message = `Hola ${selected.name || ''}, soy de OASIS. Respecto a tu solicitud en la categoría ${selected.category}: ${notes}`;
+            const link = `https://wa.me/${selected.phone}?text=${encodeURIComponent(message)}`;
+            setWaModal({ link, message, has_number: !!selected.phone });
+
+            // Actualizamos fecha en Supabase
+            await supabase.from('requests').update({ wa_link_opened_at: new Date().toISOString() }).eq('id', selected.id);
+            await fetchRequests();
         } catch (e) {
-            const msg = e.response?.data?.message || 'Error al generar enlace';
-            setActionStatus(`❌ ${msg}`);
+            setActionStatus(`❌ Error al generar enlace`);
         } finally { setActionLoading(null); }
     };
 
@@ -258,8 +265,12 @@ const Solicitudes = () => {
                                                             onClick={async (e) => {
                                                                 e.stopPropagation();
                                                                 try {
-                                                                    const res = await apiClient.get(`/requests/${req.id}/whatsapp-link`);
-                                                                    if (res.data.link) window.open(res.data.link, '_blank');
+                                                                    // REEMPLAZO: Generación local del link de WhatsApp
+                                                                    const message = `Hola, soy de OASIS. Respecto a tu solicitud #${req.id}...`;
+                                                                    const link = `https://wa.me/${req.phone}?text=${encodeURIComponent(message)}`;
+                                                                    window.open(link, '_blank');
+                                                                    // Actualizamos fecha en Supabase
+                                                                    await supabase.from('requests').update({ wa_link_opened_at: new Date().toISOString() }).eq('id', req.id);
                                                                     await fetchRequests();
                                                                 } catch (err) {
                                                                     alert(err.response?.data?.message || 'Error WA');

@@ -56,17 +56,19 @@ const App = () => {
                 </Route>
 
                 {/* Admin Routes */}
-                <Route element={<AdminLayout />}>
-                    <Route path="/admin/solicitudes" element={<Solicitudes />} />
-                    <Route path="/admin/recursos" element={<AdminRecursos />} />
-                    <Route path="/admin/announcements" element={<AdminAnnouncements />} />
-                    <Route path="/admin/users" element={<AdminUsers />} />
-                    <Route path="/admin/inscripciones" element={<AdminForms />} />
-                    <Route path="/admin/cartelera" element={<AdminBillboard />} />
-                    <Route path="/admin/ajustes" element={<AdminAjustes />} />
-                    <Route path="/admin/live" element={<AdminLive />} />
-                    <Route path="/admin/about" element={<AdminAbout />} />
-                    <Route path="/admin/creator" element={<AdminAnnouncements />} />
+                <Route element={<ProtectedRoute adminOnly={true} />}>
+                    <Route element={<AdminLayout />}>
+                        <Route path="/admin/solicitudes" element={<Solicitudes />} />
+                        <Route path="/admin/recursos" element={<AdminRecursos />} />
+                        <Route path="/admin/announcements" element={<AdminAnnouncements />} />
+                        <Route path="/admin/users" element={<AdminUsers />} />
+                        <Route path="/admin/inscripciones" element={<AdminForms />} />
+                        <Route path="/admin/cartelera" element={<AdminBillboard />} />
+                        <Route path="/admin/ajustes" element={<AdminAjustes />} />
+                        <Route path="/admin/live" element={<AdminLive />} />
+                        <Route path="/admin/about" element={<AdminAbout />} />
+                        <Route path="/admin/creator" element={<AdminAnnouncements />} />
+                    </Route>
                 </Route>
             </Routes>
         </Router>

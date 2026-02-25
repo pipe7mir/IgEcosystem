@@ -7,7 +7,7 @@ import Hero from '../components/Hero';
 import Announcements from '../components/Announcements';
 import MapSection from '../components/MapSection';
 import CalendarSection from '../components/CalendarSection';
-import apiClient from '../../api/client';
+import { supabase } from '../../lib/supabaseClient';
 
 const Home = () => {
     const [settings, setSettings] = useState({
@@ -18,8 +18,11 @@ const Home = () => {
     });
 
     useEffect(() => {
-        apiClient.get('/settings').then(res => {
-            setSettings(prev => ({ ...prev, ...res.data }));
+        supabase.from('settings').select('*').then(({ data, error }) => {
+            if (error) throw error;
+            const settingsObj = {};
+            data.forEach(s => settingsObj[s.key] = s.value);
+            setSettings(prev => ({ ...prev, ...settingsObj }));
         }).catch(err => console.error(err));
     }, []);
 

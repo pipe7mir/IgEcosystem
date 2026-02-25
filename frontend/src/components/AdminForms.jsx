@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import apiClient from '../api/client';
+import { supabase } from '../lib/supabaseClient';
 import { theme } from '../react-ui/styles/theme';
 /**
  * Componente AdminForms
@@ -30,8 +30,9 @@ const AdminForms = () => {
     const fetchForms = async () => {
         setLoading(true);
         try {
-            const res = await apiClient.get('/admin/event-forms');
-            setForms(Array.isArray(res.data) ? res.data : []);
+            const { data, error } = await supabase.from('event_forms').select('*').order('created_at', { ascending: false });
+            if (error) throw error;
+            setForms(data || []);
         } catch (e) { console.error('Error al cargar formularios:', e); }
         finally { setLoading(false); }
     };
@@ -56,15 +57,12 @@ const AdminForms = () => {
      */
     const handleSaveForm = async () => {
         try {
-            if (editingForm.id) {
-                await apiClient.put(`/admin/event-forms/${editingForm.id}`, editingForm);
-            } else {
-                await apiClient.post('/admin/event-forms', editingForm);
-            }
+            const { error } = await supabase.from('event_forms').upsert([editingForm]);
+            if (error) throw error;
             setEditingForm(null);
             fetchForms();
         } catch (e) {
-            alert('Error al guardar el formulario');
+            alert('Error al guardar el formulario: ' + e.message);
         }
     };
 
@@ -74,7 +72,8 @@ const AdminForms = () => {
     const handleDeleteForm = async (id) => {
         if (!window.confirm('¿Estás seguro de eliminar este formulario? Se borrarán también todas las respuestas.')) return;
         try {
-            await apiClient.delete(`/admin/event-forms/${id}`);
+            const { error } = await supabase.from('event_forms').delete().eq('id', id);
+            if (error) throw error;
             fetchForms();
         } catch (e) { console.error('Error al eliminar formulario:', e); }
     };
@@ -84,9 +83,9 @@ const AdminForms = () => {
      */
     const fetchSubmissions = async (formId) => {
         try {
-            const res = await apiClient.get('/admin/event-submissions', { params: { event_form_id: formId } });
-            const data = Array.isArray(res.data) ? res.data : [];
-            setSubmissions(data);
+            const { data, error } = await supabase.from('event_submissions').select('*').eq('event_form_id', formId);
+            if (error) throw error;
+            setSubmissions(data || []);
             setViewingSubmissionsFor(forms.find(f => f.id === formId));
         } catch (e) { console.error('Error al cargar inscripciones:', e); }
     };
@@ -237,12 +236,12 @@ const AdminForms = () => {
                                     <tr key={sub.id}>
                                         {viewingSubmissionsFor.fields.map(f => {
                                             const val = sub.data[f.label];
-                                            const isFile = typeof val === 'string' && val.startsWith('/storage/submissions/');
+                                            const isFile = typeof val === 'string' && val.includes('.supabase.co/storage/v1/object/public/');
 
                                             return (
                                                 <td key={f.id}>
                                                     {isFile ? (
-                                                        <a href={`${apiClient.defaults.baseURL.replace('/api', '')}${val}`} target="_blank" rel="noopener noreferrer" className="btn btn-xs btn-outline-primary py-0 px-2 small">
+                                                        <a href={val} target="_blank" rel="noopener noreferrer" className="btn btn-xs btn-outline-primary py-0 px-2 small">
                                                             <i className="bi bi-download me-1"></i>Ver Archivo
                                                         </a>
                                                     ) : (val || '—')}
@@ -253,7 +252,8 @@ const AdminForms = () => {
                                         <td className="text-end">
                                             <button className="btn btn-sm text-danger" onClick={async () => {
                                                 if (window.confirm('¿Eliminar respuesta?')) {
-                                                    await apiClient.delete(`/admin/event-submissions/${sub.id}`);
+                                                    const { error } = await supabase.from('event_submissions').delete().eq('id', sub.id);
+                                                    if (error) throw error;
                                                     fetchSubmissions(viewingSubmissionsFor.id);
                                                 }
                                             }}>Borrar</button>

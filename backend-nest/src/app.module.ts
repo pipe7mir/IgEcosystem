@@ -31,9 +31,9 @@ import { TestCorsController } from './common/test-cors.controller';
     ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRootAsync({
       useFactory: () => ({
-        type: 'mysql',
+        type: 'postgres',
         host: process.env.DB_HOST,
-        port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 3306,
+        port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 5432,
         username: process.env.DB_USERNAME,
         password: process.env.DB_PASSWORD,
         database: process.env.DB_DATABASE,
@@ -51,6 +51,7 @@ import { TestCorsController } from './common/test-cors.controller';
           LiveSetting,
         ],
         synchronize: false, // Maintain sync manually with Laravel schema
+        ssl: true,
       }),
     }),
     AuthModule,

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import axios from 'axios';
+import { supabase } from '../lib/supabaseClient';
 import { theme } from '../styles/theme';
 import GlassCard from './GlassCard';
 
@@ -245,10 +245,10 @@ const Announcements = () => {
     useEffect(() => {
         const fetchAnnouncements = async () => {
             try {
-                const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
-                const response = await axios.get(`${apiUrl}/announcements`);
-                if (Array.isArray(response.data) && response.data.length > 0) {
-                    setAnnouncements(response.data);
+                const { data, error } = await supabase.from('announcements').select('*').order('created_at', { ascending: false });
+                if (error) throw error;
+                if (Array.isArray(data) && data.length > 0) {
+                    setAnnouncements(data);
                 } else {
                     setAnnouncements([{
                         id: 1, title: 'Lanzamiento Nueva Web', tag: 'Tecnología',
