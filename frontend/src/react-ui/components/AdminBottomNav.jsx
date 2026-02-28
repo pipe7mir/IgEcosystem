@@ -98,7 +98,7 @@ const AdminBottomNav = () => {
             {showMore && (
                 <div
                     style={{
-                        position: 'fixed', inset: 0, zIndex: 1001,
+                        position: 'fixed', inset: 0, zIndex: 19999,
                         background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)',
                     }}
                     onClick={() => setShowMore(false)}
@@ -154,7 +154,7 @@ const AdminBottomNav = () => {
 
             <nav
                 style={{
-                    position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 1002,
+                    position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 20000,
                     backdropFilter: 'blur(24px) saturate(180%)',
                     WebkitBackdropFilter: 'blur(24px) saturate(180%)',
                     backgroundColor: 'rgba(255, 255, 255, 0.85)',

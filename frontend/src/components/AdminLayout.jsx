@@ -159,6 +159,7 @@ const AdminLayout = () => {
                 marginLeft: isDesktop ? sidebarWidth : 0,
                 transition: 'margin-left 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
                 padding: '24px 16px',
+                paddingBottom: isMobile ? '80px' : '0',
                 minHeight: '100vh',
                 maxWidth: '100%',
                 overflowX: 'hidden'

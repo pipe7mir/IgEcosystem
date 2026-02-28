@@ -255,7 +255,7 @@ const ClockPickerModal = ({ value, onChange, onClose }) => {
         onChange(`${String(h24).padStart(2, '0')}:${String(newM).padStart(2, '0')}`);
     };
     return (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        <div style={{ position: 'fixed', inset: 0, zIndex: 15000, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
             <div style={{ background: '#fff', borderRadius: '20px', padding: '24px', boxShadow: '0 20px 60px rgba(0,0,0,0.4)', width: '230px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px' }}>
                 <h6 style={{ margin: 0, fontWeight: 700, color: '#1f1f2e', fontSize: '0.95rem' }}>Seleccionar Hora</h6>
@@ -315,7 +315,7 @@ const CalendarPickerModal = ({ value, onChange, onClose }) => {
     const prevMonth = () => calMonth === 0 ? (setCalYear(y => y - 1), setCalMonth(11)) : setCalMonth(m => m - 1);
     const nextMonth = () => calMonth === 11 ? (setCalYear(y => y + 1), setCalMonth(0)) : setCalMonth(m => m + 1);
     return (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        <div style={{ position: 'fixed', inset: 0, zIndex: 15000, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
             <div style={{ background: '#fff', borderRadius: '20px', padding: '20px', boxShadow: '0 20px 60px rgba(0,0,0,0.4)', width: '290px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <h6 style={{ margin: 0, fontWeight: 700, color: '#1f1f2e', textAlign: 'center', fontSize: '0.95rem' }}>Seleccionar Fecha</h6>
@@ -1545,7 +1545,16 @@ const AdminAnnouncements = () => {
                 </div>
 
                 {/* ── Ribbon Content ── */}
-                <div style={{ display: 'flex', alignItems: 'stretch', padding: '4px 6px', minHeight: '62px', overflowX: 'auto', background: '#fff' }}>
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'stretch',
+                    padding: isMobile ? '2px 4px' : '4px 6px',
+                    minHeight: isMobile ? 'auto' : '62px',
+                    overflowX: 'auto',
+                    background: '#fff',
+                    flexWrap: isMobile ? 'nowrap' : 'nowrap',
+                    scrollbarWidth: 'none'
+                }}>
 
                     {/* ═══════ INICIO ═══════ */}
                     {activeRibbonTab === 'inicio' && (
