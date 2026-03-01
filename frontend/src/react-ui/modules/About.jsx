@@ -3,8 +3,10 @@ import { createPortal } from 'react-dom';
 import { theme } from '../styles/theme';
 import GlassCard from '../components/GlassCard';
 import apiClient from '../../api/client';
+import useAppMode from '../../hooks/useAppMode';
 
 const About = () => {
+    const { isMobile } = useAppMode();
     const [data, setData] = useState({
         about_hero_title: 'Nuestra Identidad',
         about_hero_content: 'Somos una comunidad dedicada a transformar vidas a través del amor, el servicio y la innovación. Creemos en construir un futuro donde todos tengan un lugar.',
@@ -91,8 +93,13 @@ const About = () => {
     if (loading) return <div className="text-center p-5"><div className="spinner-border text-primary"></div></div>;
 
     return (
-        <div style={{ animation: 'fadeIn 0.5s ease-in-out', fontFamily: theme.fonts.body, padding: `0 ${theme.spacing(2)}` }}>
-            <header style={{ textAlign: 'center', marginBottom: theme.spacing(6) }}>
+        <div style={{
+            animation: 'fadeIn 0.5s ease-in-out',
+            fontFamily: theme.fonts.body,
+            padding: `0 ${theme.spacing(2)}`,
+            paddingTop: isMobile ? theme.spacing(4) : 0
+        }}>
+            <header style={{ textAlign: 'center', marginBottom: isMobile ? theme.spacing(6) : theme.spacing(3) }}>
                 <h2 style={{ fontFamily: theme.fonts.titles, fontSize: 'clamp(2rem, 6vw, 3rem)', color: theme.colors.secondary, marginBottom: theme.spacing(2) }}>
                     {data.about_hero_title}
                 </h2>

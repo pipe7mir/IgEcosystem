@@ -3,8 +3,10 @@ import { theme } from '../styles/theme';
 import GlassCard from '../components/GlassCard';
 import Button from '../components/Button';
 import apiClient from '../../api/client';
+import useAppMode from '../../hooks/useAppMode';
 
 const Live = () => {
+    const { isMobile } = useAppMode();
     const [settings, setSettings] = useState({
         youtube_channel_id: '',
         youtube_live_video_id: '',
@@ -40,7 +42,7 @@ const Live = () => {
         margin: `-${theme.spacing(4)}`, // Counteract text container padding
         marginTop: '-20px',
         padding: theme.spacing(4),
-        paddingTop: theme.spacing(10), // Add space for navbar
+        paddingTop: isMobile ? theme.spacing(10) : theme.spacing(4), // Add space only for mobile header
         color: 'white',
         borderRadius: '0',
         position: 'relative',

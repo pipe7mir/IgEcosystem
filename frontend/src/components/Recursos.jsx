@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import apiClient from '../api/client';
 import { theme } from '../react-ui/styles/theme';
+import useAppMode from '../hooks/useAppMode';
 
 const Recursos = () => {
+    const { isMobile } = useAppMode();
     const [resources, setResources] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -39,8 +41,8 @@ const Recursos = () => {
     if (error) return <div className="text-center py-5 text-danger">{error}</div>;
 
     return (
-        <div className="container py-4 px-3 animate__animated animate__fadeIn">
-            <header className="text-center py-4">
+        <div className={`container px-3 animate__animated animate__fadeIn ${isMobile ? 'py-4' : 'pt-0 pb-4'}`}>
+            <header className={`text-center ${isMobile ? 'py-4' : 'pt-2 pb-3'}`}>
                 <h2 className="fw-bold mb-2" style={{ fontFamily: theme.fonts.logo, color: theme.colors.primary, letterSpacing: '4px', fontSize: 'clamp(1.5rem, 5vw, 2.5rem)' }}>
                     RECURSOS OASIS
                 </h2>
