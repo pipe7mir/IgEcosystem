@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { theme } from '../react-ui/styles/theme';
 import Footer from '../react-ui/components/Footer';
@@ -18,8 +18,6 @@ import {
     FileCheck,
     LogOut,
     ExternalLink,
-    ChevronLeft,
-    ChevronRight,
     LayoutDashboard
 } from 'lucide-react';
 
@@ -28,7 +26,6 @@ const AdminLayout = () => {
     const navigate = useNavigate();
     const { signOut, user, role } = useAuth();
     const { isMobile, isDesktop } = useAppMode();
-    const [collapsed, setCollapsed] = useState(false);
 
     /**
      * RBAC SECURITY GUARD
@@ -41,8 +38,9 @@ const AdminLayout = () => {
         }
     }, [location.pathname, role, navigate]);
 
-    // Configuración de enlaces para el Sidebar
+    // Configuración de enlaces para el Navbar
     const allLinks = [
+        { to: '/admin', label: 'Inicio', Icon: LayoutDashboard },
         { to: '/admin/solicitudes', label: 'Solicitudes', Icon: Inbox },
         { to: '/admin/announcements', label: 'Anuncios', Icon: Megaphone },
         { to: '/admin/inscripciones', label: 'Inscripciones', Icon: FileCheck },
@@ -61,79 +59,105 @@ const AdminLayout = () => {
     return (
         <div style={{ minHeight: '100vh', background: '#f4f7f6', fontFamily: 'AdventSans, sans-serif' }}>
 
-            {/* ─── DESKTOP SIDEBAR (Liquid Glass) ─── */}
+            {/* ─── DESKTOP HORIZONTAL NAVBAR ─── */}
             {isDesktop && (
-                <aside style={{
-                    position: 'fixed', top: 0, left: 0, bottom: 0, width: sidebarWidth,
-                    zIndex: 200, display: 'flex', flexDirection: 'column',
+                <header style={{
+                    position: 'sticky', top: 0, zIndex: 1000,
                     backdropFilter: 'blur(24px) saturate(180%)',
-                    backgroundColor: 'rgba(255, 255, 255, 0.85)',
-                    borderRight: '1px solid rgba(0,0,0,0.06)',
-                    boxShadow: '4px 0 24px rgba(0,0,0,0.03)',
-                    transition: 'width 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                    borderBottom: '1px solid rgba(0,0,0,0.06)',
+                    boxShadow: '0 2px 12px rgba(0,0,0,0.03)',
                 }}>
-                    {/* Header Sidebar */}
-                    <div style={{ padding: '24px 20px', borderBottom: '1px solid rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <img src={logoImg} alt="OASIS" style={{ width: '32px', height: '32px' }} />
-                        {!collapsed && (
-                            <div style={{ minWidth: 0 }}>
-                                <h6 style={{ margin: 0, fontWeight: 800, fontFamily: 'ModernAge', color: '#5b2ea6', fontSize: '1rem' }}>OASIS</h6>
-                                <span style={{ fontSize: '10px', color: '#6b7280', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px' }}>ADMIN PANEL</span>
-                            </div>
-                        )}
-                    </div>
+                    <div style={{ 
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        padding: '0 24px', height: '64px', maxWidth: '100%'
+                    }}>
+                        {/* Left: Logo + OASIS */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <img src={logoImg} alt="OASIS" style={{ width: '36px', height: '36px' }} />
+                            <h6 style={{ margin: 0, fontWeight: 900, fontFamily: 'ModernAge', color: '#5b2ea6', fontSize: '1.25rem', letterSpacing: '0.5px' }}>OASIS</h6>
+                        </div>
 
-                    {/* Nav Links */}
-                    <nav style={{ flex: 1, padding: '16px 10px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        {links.map(({ to, label, Icon }) => {
-                            const active = location.pathname === to || location.pathname.startsWith(to);
-                            return (
-                                <Link key={to} to={to} title={collapsed ? label : undefined}
-                                    style={{
-                                        display: 'flex', alignItems: 'center', gap: collapsed ? 0 : '12px',
-                                        padding: collapsed ? '12px' : '10px 16px', borderRadius: '14px',
-                                        justifyContent: collapsed ? 'center' : 'flex-start',
-                                        textDecoration: 'none', background: active ? 'rgba(91,46,166,0.08)' : 'transparent',
-                                        color: active ? '#5b2ea6' : '#435566', fontWeight: active ? 700 : 500,
-                                        transition: 'all 0.2s', borderLeft: active ? '3px solid #5b2ea6' : '3px solid transparent'
-                                    }}>
-                                    <Icon size={18} strokeWidth={active ? 2.5 : 2} />
-                                    {!collapsed && <span style={{ fontSize: '0.9rem' }}>{label}</span>}
-                                </Link>
-                            );
-                        })}
-                    </nav>
+                        {/* Center/Right: Nav Links */}
+                        <nav style={{ display: 'flex', alignItems: 'center', gap: '4px', flex: 1, justifyContent: 'center' }}>
+                            {links.map(({ to, label, Icon }) => {
+                                const active = location.pathname === to || location.pathname.startsWith(to);
+                                return (
+                                    <Link key={to} to={to}
+                                        style={{
+                                            display: 'flex', alignItems: 'center', gap: '8px',
+                                            padding: '8px 16px', borderRadius: '10px',
+                                            textDecoration: 'none', 
+                                            background: active ? 'rgba(91,46,166,0.1)' : 'transparent',
+                                            color: active ? '#5b2ea6' : '#435566', 
+                                            fontWeight: active ? 700 : 500,
+                                            fontSize: '0.9rem',
+                                            transition: 'all 0.2s',
+                                            borderBottom: active ? '2px solid #5b2ea6' : '2px solid transparent',
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            if (!active) e.currentTarget.style.background = 'rgba(91,46,166,0.05)';
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            if (!active) e.currentTarget.style.background = 'transparent';
+                                        }}
+                                    >
+                                        <Icon size={18} strokeWidth={active ? 2.5 : 2} />
+                                        <span>{label}</span>
+                                    </Link>
+                                );
+                            })}
+                        </nav>
 
-                    {/* User Info & Actions */}
-                    <div style={{ padding: '20px', borderTop: '1px solid rgba(0,0,0,0.05)' }}>
-                        {!collapsed && user && (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
-                                <div style={{ width: '36px', height: '36px', borderRadius: '12px', background: 'linear-gradient(135deg, #5b2ea6, #7c3aed)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800 }}>
-                                    {(user.name || user.email)[0].toUpperCase()}
-                                </div>
-                                <div style={{ minWidth: 0 }}>
-                                    <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#1f1f2e', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.name || user.email}</div>
-                                    <div style={{ fontSize: '0.65rem', color: '#5b2ea6', textTransform: 'uppercase', fontWeight: 700 }}>{role}</div>
-                                </div>
-                            </div>
-                        )}
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                            <a href="/" target="_blank" title="Ver Sitio" style={{ flex: 1, height: '36px', borderRadius: '10px', background: '#f3f4f6', color: '#4b5563', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.2s' }}>
+                        {/* Right: User Info & Actions */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <a href="/" target="_blank" title="Ver Sitio" 
+                                style={{ 
+                                    width: '36px', height: '36px', borderRadius: '10px', 
+                                    background: '#f3f4f6', color: '#4b5563', 
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                                    transition: 'background 0.2s', textDecoration: 'none'
+                                }}>
                                 <ExternalLink size={16} />
                             </a>
-                            <button onClick={signOut} title="Cerrar Sesión" style={{ flex: collapsed ? 1 : 2, height: '36px', border: 'none', borderRadius: '10px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontWeight: 700, cursor: 'pointer' }}>
+                            {user && (
+                                <div style={{ 
+                                    display: 'flex', alignItems: 'center', gap: '8px',
+                                    padding: '6px 12px', borderRadius: '10px',
+                                    background: 'rgba(91,46,166,0.05)'
+                                }}>
+                                    <div style={{ 
+                                        width: '32px', height: '32px', borderRadius: '10px', 
+                                        background: 'linear-gradient(135deg, #5b2ea6, #7c3aed)', 
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                                        color: '#fff', fontWeight: 800, fontSize: '0.85rem'
+                                    }}>
+                                        {(user.name || user.email)[0].toUpperCase()}
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                        <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#1f1f2e' }}>
+                                            {user.name || user.email}
+                                        </span>
+                                        <span style={{ fontSize: '0.65rem', color: '#5b2ea6', textTransform: 'uppercase', fontWeight: 700 }}>
+                                            {role}
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
+                            <button onClick={signOut} title="Cerrar Sesión" 
+                                style={{ 
+                                    height: '36px', border: 'none', borderRadius: '10px', 
+                                    background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', 
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                                    gap: '6px', fontWeight: 700, cursor: 'pointer',
+                                    padding: '0 12px', fontSize: '0.8rem'
+                                }}>
                                 <LogOut size={16} />
-                                {!collapsed && <span style={{ fontSize: '0.75rem' }}>Salir</span>}
+                                <span>Salir</span>
                             </button>
                         </div>
                     </div>
-
-                    {/* Toggle Button */}
-                    <button onClick={() => setCollapsed(!collapsed)}
-                        style={{ position: 'absolute', right: '-12px', top: '80px', width: '24px', height: '24px', borderRadius: '50%', background: '#fff', border: '1px solid #eee', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', zIndex: 10 }}>
-                        {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
-                    </button>
-                </aside>
+                </header>
             )}
 
             {/* ─── MOBILE HEADER (Liquid Glass) ─── */}
@@ -156,15 +180,13 @@ const AdminLayout = () => {
 
             {/* ─── MAIN CONTENT ─── */}
             <main style={{
-                marginLeft: isDesktop ? sidebarWidth : 0,
-                transition: 'margin-left 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
                 padding: '24px 16px',
-                paddingBottom: isMobile ? '80px' : '0',
+                paddingBottom: isMobile ? '80px' : '24px',
                 minHeight: '100vh',
                 maxWidth: '100%',
                 overflowX: 'hidden'
             }}>
-                <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+                <div style={{ maxWidth: '1600px', margin: '0 auto' }}>
                     <Outlet />
                 </div>
             </main>
