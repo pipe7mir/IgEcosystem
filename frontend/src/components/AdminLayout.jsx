@@ -54,8 +54,6 @@ const AdminLayout = () => {
 
     const links = allLinks.filter(l => !l.adminOnly || role === 'admin');
 
-    const sidebarWidth = collapsed ? '72px' : '260px';
-
     return (
         <div style={{ minHeight: '100vh', background: '#f4f7f6', fontFamily: 'AdventSans, sans-serif' }}>
 
