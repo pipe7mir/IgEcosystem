@@ -89,8 +89,9 @@ const AdminBillboard = () => {
     };
 
     /**
-     * Convierte un archivo de imagen a Base64 comprimido
-     * Redimensiona a máximo 1920x1080 y comprime con calidad 0.75
+     * Convierte un archivo de imagen a Base64 altamente comprimido
+     * Redimensiona a máximo 1280x720 y comprime con calidad 0.5 (muy agresivo)
+     * Minimiza tamaño para evitar errores 413 en servidores con límites de payload
      */
     const convertImageToBase64 = (file) => {
         return new Promise((resolve, reject) => {
@@ -102,9 +103,9 @@ const AdminBillboard = () => {
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
                     
-                    // Máximas dimensiones: 1920x1080
-                    const maxWidth = 1920;
-                    const maxHeight = 1080;
+                    // Máximas dimensiones: 1280x720 (reduce tamaño significativamente)
+                    const maxWidth = 1280;
+                    const maxHeight = 720;
                     let { width, height } = img;
                     
                     // Calcular las nuevas dimensiones manteniendo la relación de aspecto
@@ -121,9 +122,10 @@ const AdminBillboard = () => {
                     canvas.height = height;
                     ctx.drawImage(img, 0, 0, width, height);
                     
-                    // Exportar como JPEG con compresión (calidad 0.75 = 75%)
-                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.75);
-                    console.log(`🗜️  Imagen comprimida: ${(compressedBase64.length / 1024).toFixed(1)}KB (${width}x${height}px)`);
+                    // Exportar como JPEG altamente comprimido (calidad 0.5 = 50%)
+                    // Reduce tamaño en base64 a ~40-60KB para imágenes típicas
+                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.5);
+                    console.log(`🗜️  Imagen ultra-comprimida: ${(compressedBase64.length / 1024).toFixed(1)}KB (${width}x${height}px)`);
                     resolve(compressedBase64);
                 };
                 img.onerror = () => reject(new Error('No se pudo cargar la imagen'));
@@ -449,7 +451,7 @@ const AdminBillboard = () => {
                                 />
                                 <small className="text-primary d-block mt-1">
                                     <i className="bi bi-info-circle me-1"></i>
-                                    Max <strong>1920x1080px</strong> (16:9). Se comprime automáticamente a <strong>JPEG 75%</strong>.
+                                    Max <strong>1280x720px</strong> (16:9). Compresión ultra: <strong>JPEG 50%</strong> (~40-60KB).
                                 </small>
                             </div>
                             <div>

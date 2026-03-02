@@ -23,9 +23,14 @@ async function bootstrap() {
     logger: ['error', 'warn', 'log'],
   });
 
-  // Configure body parser with 50MB limit for base64 images
-  app.use(express.json({ limit: '50mb' }));
-  app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+  // ⚠️ CRITICAL: Configure body parser IMMEDIATELY after app creation, before any middleware
+  // This must be done to override NestJS default limits
+  app.use(express.json({ limit: '100mb' }));
+  app.use(express.urlencoded({ extended: true, limit: '100mb' }));
+  app.use(express.raw({ limit: '100mb' }));
+  
+  // Log payload configuration
+  console.log('📦 Payload limit configured: 100MB');
 
   // Health check endpoints BEFORE global prefix
   const httpAdapter = app.getHttpAdapter();
