@@ -27,28 +27,30 @@ export class AdminBillboardsController {
   @Post('upload-image')
   async uploadImage(@Body() body: any) {
     try {
-      console.log('📥 Billboard upload request received');
+      console.log('📥 Billboard upload request received, body keys:', Object.keys(body || {}));
+      console.log('📥 Body type:', typeof body);
       
       // Handle both { imageBase64: "..." } and raw string
       let imageBase64 = body?.imageBase64 || body;
       
       if (!imageBase64 || typeof imageBase64 !== 'string') {
-        console.error('❌ Invalid image data for billboard');
+        console.error('❌ Invalid image data:', { 
+          hasBody: !!body, 
+          bodyType: typeof body,
+          hasImageBase64: !!body?.imageBase64 
+        });
         throw new HttpException('No valid image provided', HttpStatus.BAD_REQUEST);
       }
       
       console.log('📸 Billboard image size:', (imageBase64.length / 1024).toFixed(1) + 'KB');
       
-      // Try Cloudinary first if configured
+      // Try Cloudinary first if configured (same as announcements module)
       if (process.env.CLOUDINARY_URL) {
         try {
           console.log('☁️ Uploading billboard to Cloudinary...');
           const result = await cloudinary.uploader.upload(imageBase64, {
             folder: 'oasis-billboards',
             resource_type: 'image',
-            transformation: [
-              { width: 1920, height: 1080, crop: 'limit', quality: 'auto:best' }
-            ]
           });
           console.log(`✅ Cloudinary billboard upload success: ${result.secure_url}`);
           return { success: true, imageUrl: result.secure_url };
@@ -57,7 +59,7 @@ export class AdminBillboardsController {
         }
       }
 
-      // Fallback: save locally
+      // Fallback: save locally (note: Railway doesn't persist files across deploys)
       const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
       const buffer = Buffer.from(base64Data, 'base64');
       const filename = `billboard-${Date.now()}.jpg`;
@@ -67,11 +69,10 @@ export class AdminBillboardsController {
         fs.mkdirSync(uploadsDir, { recursive: true });
       }
       
-      const filePath = path.join(uploadsDir, filename);
-      fs.writeFileSync(filePath, buffer);
+      fs.writeFileSync(path.join(uploadsDir, filename), buffer);
       console.log(`📸 Local billboard upload: ${filename} (${buffer.length} bytes)`);
       
-      // Return full URL
+      // Return full URL for consistency with Hero loading
       const apiBaseUrl = process.env.API_BASE_URL || 'http://localhost:3000';
       const fullUrl = `${apiBaseUrl}/uploads/${filename}`;
       console.log(`✅ Local billboard saved, returning URL: ${fullUrl}`);
