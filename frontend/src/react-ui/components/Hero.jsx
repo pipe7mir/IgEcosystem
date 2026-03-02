@@ -96,19 +96,44 @@ const Hero = () => {
     const currentSlide = activeSlides[currentIndex];
 
     /**
+     * Normaliza las URLs de medios para asegurar que apunten al backend correcto
+     * Si la URL es relativa (/uploads/...), la convierte a URL absoluta del backend
+     */
+    const normalizeMediaUrl = (url) => {
+        if (!url) return url;
+        
+        // Si ya es una URL completa (http/https), retornarla tal cual
+        if (url.startsWith('http://') || url.startsWith('https://')) {
+            return url;
+        }
+        
+        // Si es una ruta relativa de uploads, construir URL completa con el backend
+        if (url.startsWith('/uploads/')) {
+            const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            // Remover /api del final si existe
+            const backendUrl = apiBase.replace(/\/api\/?$/, '');
+            return `${backendUrl}${url}`;
+        }
+        
+        return url;
+    };
+
+    /**
      * Renderizador de Fondo (Media)
      * Detecta si es video (MP4/YouTube) o imagen y genera el HTML correspondiente.
      */
     const renderBackground = (slide) => {
+        const mediaUrl = normalizeMediaUrl(slide.media_url);
+        
         if (slide.media_type === 'video') {
-            const isYoutube = slide.media_url.includes('youtube.com') || slide.media_url.includes('youtu.be');
+            const isYoutube = mediaUrl.includes('youtube.com') || mediaUrl.includes('youtu.be');
 
             if (isYoutube) {
                 let videoId = '';
-                if (slide.media_url.includes('embed/')) {
-                    videoId = slide.media_url.split('embed/')[1].split('?')[0];
-                } else if (slide.media_url.includes('v=')) {
-                    videoId = slide.media_url.split('v=')[1].split('&')[0];
+                if (mediaUrl.includes('embed/')) {
+                    videoId = mediaUrl.split('embed/')[1].split('?')[0];
+                } else if (mediaUrl.includes('v=')) {
+                    videoId = mediaUrl.split('v=')[1].split('&')[0];
                 }
 
                 return (
@@ -128,7 +153,7 @@ const Hero = () => {
                     autoPlay muted loop playsInline
                     style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: -3 }}
                 >
-                    <source src={slide.media_url} type="video/mp4" />
+                    <source src={mediaUrl} type="video/mp4" />
                 </video>
             );
         }
@@ -136,7 +161,7 @@ const Hero = () => {
         return (
             <div style={{
                 position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
-                backgroundImage: `url(${slide.media_url})`, backgroundSize: 'cover',
+                backgroundImage: `url(${mediaUrl})`, backgroundSize: 'cover',
                 backgroundPosition: 'center', zIndex: -3, transition: 'background-image 1s ease-in-out'
             }} />
         );

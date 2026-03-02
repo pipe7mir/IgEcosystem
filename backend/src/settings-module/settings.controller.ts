@@ -69,9 +69,14 @@ export class SettingsController {
       if (!file) {
         return { success: false, message: 'No file uploaded' };
       }
+      
+      // Construct full URL based on environment
+      const apiBaseUrl = process.env.API_BASE_URL || 'http://localhost:3000';
+      const fullUrl = `${apiBaseUrl}/uploads/${file.filename}`;
+      
       return {
         filename: file.filename,
-        url: `/uploads/${file.filename}`
+        url: fullUrl
       };
     } catch (error: any) {
       console.error('❌ Upload error:', error);
