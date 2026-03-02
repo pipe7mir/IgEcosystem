@@ -46,6 +46,7 @@ const AdminBillboard = () => {
         'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1920&h=1080',
     ]);
     const [showGallery, setShowGallery] = useState(false);
+    const [showPreview, setShowPreview] = useState(false);
     
     // ESTADOS: Vista previa en tiempo real
     const [livePreviewMode, setLivePreviewMode] = useState(true);
