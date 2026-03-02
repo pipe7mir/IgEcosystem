@@ -16,6 +16,8 @@ const AdminBillboard = () => {
     const [loading, setLoading] = useState(true);
     const [editingItem, setEditingItem] = useState(null);
     const [selectedFile, setSelectedFile] = useState(null);
+    const [uploading, setUploading] = useState(false);
+    const [showPreview, setShowPreview] = useState(false);
     const [formData, setFormData] = useState({
         title: '',
         description: '',
@@ -86,38 +88,43 @@ const AdminBillboard = () => {
     };
 
     /**
+     * Convierte un archivo de imagen a Base64 de alta calidad
+     */
+    const convertImageToBase64 = (file) => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+    };
+
+    /**
      * Envía los datos a la API (Creación o Actualización)
-     * Utiliza FormData para soportar la carga de archivos de imagen.
+     * Usa Base64 para imágenes de alta calidad (similar a anuncios)
      */
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        const data = new FormData();
-        Object.keys(formData).forEach(key => {
-            data.append(key, formData[key]);
-        });
-
-        // Adjunta el archivo seleccionado si existe
-        if (selectedFile) {
-            data.append('media_file', selectedFile);
-        }
-
         try {
+            setUploading(true);
             let mediaUrl = formData.media_url;
 
+            // Si hay archivo seleccionado, convertirlo a base64 y subirlo
             if (selectedFile) {
-                const fileName = `billboard_${Date.now()}-${selectedFile.name}`;
-                const uploadData = new FormData();
-                uploadData.append('file', selectedFile, fileName);
-
-                const { data } = await apiClient.post('/upload', uploadData, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
-                });
-
-                mediaUrl = data.url || data.filename;
+                const imageBase64 = await convertImageToBase64(selectedFile);
+                const { data } = await apiClient.post('/admin/billboards/upload-image', { imageBase64 });
+                
+                if (data.success) {
+                    mediaUrl = data.imageUrl;
+                    console.log('✅ Imagen subida con éxito:', mediaUrl);
+                } else {
+                    throw new Error('Error al subir la imagen');
+                }
             }
 
             const itemToSave = { ...formData, media_url: mediaUrl };
+            
             if (editingItem) {
                 await apiClient.put(`/admin/billboards/${editingItem.id}`, itemToSave);
             } else {
@@ -130,6 +137,8 @@ const AdminBillboard = () => {
         } catch (e) {
             console.error('Error al guardar:', e);
             alert('Error al guardar. Verifica que todos los campos sean correctos.');
+        } finally {
+            setUploading(false);
         }
     };
 
@@ -144,6 +153,139 @@ const AdminBillboard = () => {
         } catch (e) {
             console.error('Error al eliminar:', e);
         }
+    };
+
+    /**
+     * Normaliza las URLs de los medios (igual que en Hero.jsx)
+     */
+    const normalizeMediaUrl = (url) => {
+        if (!url) return url;
+        if (url.startsWith('http://') || url.startsWith('https://')) {
+            return url;
+        }
+        if (url.startsWith('/uploads/')) {
+            const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+            const backendUrl = apiBase.replace(/\/api\/?$/, '');
+            return `${backendUrl}${url}`;
+        }
+        return url;
+    };
+
+    /**
+     * Renderiza la vista previa del Hero con los datos actuales del formulario
+     */
+    const renderPreview = () => {
+        const previewUrl = normalizeMediaUrl(formData.media_url);
+        
+        return (
+            <div 
+                onClick={() => setShowPreview(false)}
+                style={{
+                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                    background: 'rgba(0,0,0,0.9)', zIndex: 9999,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    padding: '20px'
+                }}
+            >
+                <div 
+                    onClick={e => e.stopPropagation()}
+                    style={{
+                        width: '100%', maxWidth: '1400px', height: '80vh',
+                        position: 'relative', borderRadius: '20px', overflow: 'hidden',
+                        boxShadow: '0 20px 60px rgba(0,0,0,0.5)'
+                    }}
+                >
+                    {/* Botón cerrar */}
+                    <button
+                        onClick={() => setShowPreview(false)}
+                        style={{
+                            position: 'absolute', top: '20px', right: '20px', zIndex: 10,
+                            background: 'rgba(255,255,255,0.2)', border: 'none',
+                            borderRadius: '50%', width: '40px', height: '40px',
+                            color: '#fff', fontSize: '1.5rem', cursor: 'pointer',
+                            backdropFilter: 'blur(10px)'
+                        }}
+                    >
+                        ×
+                    </button>
+
+                    {/* Fondo */}
+                    <div style={{
+                        position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+                        backgroundImage: previewUrl ? `url(${previewUrl})` : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        backgroundSize: 'cover', backgroundPosition: 'center'
+                    }} />
+
+                    {/* Overlay */}
+                    <div style={{
+                        position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+                        background: 'linear-gradient(to right, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.1) 100%)'
+                    }} />
+
+                    {/* Contenido */}
+                    <div style={{
+                        position: 'relative', zIndex: 1, color: '#fff',
+                        height: '100%', display: 'flex', alignItems: 'center',
+                        padding: '0 60px'
+                    }}>
+                        <div style={{ maxWidth: '700px' }}>
+                            <h1 style={{
+                                fontFamily: 'ModernAge, sans-serif',
+                                fontSize: 'clamp(2.5rem, 8vw, 4.5rem)',
+                                fontWeight: 'bold',
+                                marginBottom: '1.5rem',
+                                lineHeight: 1.1,
+                                textShadow: '0 4px 15px rgba(0,0,0,0.5)',
+                                background: `linear-gradient(135deg, #ffffff 0%, ${theme.colors.secondary} 100%)`,
+                                WebkitBackgroundClip: 'text',
+                                WebkitTextFillColor: 'transparent'
+                            }}>
+                                {formData.title || 'Título del Hero'}
+                            </h1>
+                            <p style={{
+                                fontSize: 'clamp(1rem, 2.5vw, 1.25rem)',
+                                marginBottom: '2rem',
+                                opacity: 0.9,
+                                lineHeight: 1.6,
+                                textShadow: '0 2px 8px rgba(0,0,0,0.5)'
+                            }}>
+                                {formData.description || 'Descripción de la diapositiva del hero'}
+                            </p>
+                            {formData.button_text && (
+                                <button style={{
+                                    padding: '14px 32px',
+                                    borderRadius: '16px',
+                                    border: 'none',
+                                    background: `linear-gradient(135deg, ${theme.colors.primary}, ${theme.colors.secondary})`,
+                                    color: '#fff',
+                                    fontWeight: 'bold',
+                                    fontSize: '1.1rem',
+                                    cursor: 'pointer',
+                                    boxShadow: '0 8px 24px rgba(91,46,166,0.4)',
+                                    transition: 'all 0.3s'
+                                }}>
+                                    {formData.button_text}
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Badge de vista previa */}
+                    <div style={{
+                        position: 'absolute', bottom: '20px', right: '20px',
+                        background: 'rgba(255,255,255,0.2)',
+                        backdropFilter: 'blur(10px)',
+                        padding: '8px 16px',
+                        borderRadius: '20px',
+                        color: '#fff',
+                        fontSize: '0.85rem',
+                        fontWeight: '600'
+                    }}>
+                        <i className="bi bi-eye me-2"></i>Vista Previa
+                    </div>
+                </div>
+            </div>
+        );
     };
 
     return (
@@ -213,14 +355,25 @@ const AdminBillboard = () => {
                                     id="mediaFile"
                                     className="form-control"
                                     accept="image/*"
-                                    onChange={e => {
-                                        setSelectedFile(e.target.files[0]);
-                                        if (e.target.files[0]) setFormData({ ...formData, media_type: 'image' });
+                                    onChange={async (e) => {
+                                        const file = e.target.files[0];
+                                        if (file) {
+                                            setSelectedFile(file);
+                                            setFormData({ ...formData, media_type: 'image' });
+                                            
+                                            // Crear vista previa temporal con el archivo seleccionado
+                                            const reader = new FileReader();
+                                            reader.onload = (ev) => {
+                                                setFormData(prev => ({ ...prev, media_url: ev.target.result }));
+                                            };
+                                            reader.readAsDataURL(file);
+                                        }
                                     }}
                                 />
                                 <small className="text-primary d-block mt-1">
                                     <i className="bi bi-info-circle me-1"></i>
-                                    Dimensiones recomendadas: <strong>1920x1080px</strong> (Relación 16:9).
+                                    Dimensiones recomendadas: <strong>1920x1080px</strong> (Relación 16:9). 
+                                    Se usará <strong>Base64</strong> para mejor calidad.
                                 </small>
                             </div>
                             <div>
@@ -266,9 +419,32 @@ const AdminBillboard = () => {
                                 />
                                 <label className="form-check-label" htmlFor="isActive">Diapositiva Activa</label>
                             </div>
-                            <Button type="submit" className="mt-3">
-                                {editingItem ? 'Actualizar Cartelera' : 'Crear Nueva Cartelera'}
-                            </Button>
+                            
+                            <div className="d-flex gap-2 mt-3">
+                                <Button 
+                                    type="submit" 
+                                    disabled={uploading}
+                                    style={{ flex: 1 }}
+                                >
+                                    {uploading ? (
+                                        <>
+                                            <span className="spinner-border spinner-border-sm me-2"></span>
+                                            Subiendo...
+                                        </>
+                                    ) : (
+                                        editingItem ? 'Actualizar Cartelera' : 'Crear Nueva Cartelera'
+                                    )}
+                                </Button>
+                                <Button 
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => setShowPreview(true)}
+                                    disabled={!formData.title && !formData.media_url}
+                                    title="Vista Previa"
+                                >
+                                    <i className="bi bi-eye"></i>
+                                </Button>
+                            </div>
                         </form>
                     </GlassCard>
                 </div>
@@ -315,6 +491,9 @@ const AdminBillboard = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Modal de Vista Previa */}
+            {showPreview && renderPreview()}
         </div>
     );
 };
