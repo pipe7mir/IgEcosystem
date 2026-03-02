@@ -1,7 +1,11 @@
-import { Controller, Get, Post, Body } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, HttpException, HttpStatus } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Billboard } from './billboard.entity';
+import { JwtAuthGuard } from '../common/jwt-auth.guard';
+import * as fs from 'fs';
+import * as path from 'path';
+import { v2 as cloudinary } from 'cloudinary';
 
 // Public GET /billboards
 @Controller('billboards')
@@ -14,6 +18,49 @@ export class BillboardsController {
   @Get()
   async index() {
     return this.repo.find({ where: { isActive: true }, order: { order: 'ASC', createdAt: 'DESC' } });
+  }
+
+  // Fallback upload endpoint (JWT protected) to avoid admin route mismatches in deployments
+  @Post('upload-image')
+  @UseGuards(JwtAuthGuard)
+  async uploadImage(@Body() body: any) {
+    try {
+      const imageBase64 = body?.imageBase64 || body;
+
+      if (!imageBase64 || typeof imageBase64 !== 'string') {
+        throw new HttpException('No valid image provided', HttpStatus.BAD_REQUEST);
+      }
+
+      if (process.env.CLOUDINARY_URL) {
+        try {
+          const result = await cloudinary.uploader.upload(imageBase64, {
+            folder: 'oasis-billboards',
+            resource_type: 'image',
+          });
+          return { success: true, imageUrl: result.secure_url };
+        } catch (cloudErr: any) {
+          console.error('⚠️ Cloudinary upload failed in /billboards/upload-image:', cloudErr.message);
+        }
+      }
+
+      const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
+      const buffer = Buffer.from(base64Data, 'base64');
+      const filename = `billboard-${Date.now()}.jpg`;
+      const uploadsDir = path.join(process.cwd(), 'uploads');
+
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+      }
+
+      fs.writeFileSync(path.join(uploadsDir, filename), buffer);
+      const apiBaseUrl = process.env.API_BASE_URL || 'http://localhost:3000';
+      const fullUrl = `${apiBaseUrl}/uploads/${filename}`;
+
+      return { success: true, imageUrl: fullUrl };
+    } catch (error: any) {
+      console.error('❌ Error in /billboards/upload-image:', error);
+      throw new HttpException(error.message || 'Upload failed', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   // Debug endpoint to test payload size limits

@@ -153,7 +153,8 @@ const AdminBillboard = () => {
                 const imageBase64 = await convertImageToBase64(selectedFile);
                 console.log('📸 Base64 generado, tamaño:', (imageBase64.length / 1024).toFixed(1) + 'KB');
                 
-                const { data } = await apiClient.post('/admin/billboards/upload-image', { imageBase64 });
+                const { data } = await apiClient.post('/billboards/upload-image', { imageBase64 });
+
                 console.log('📥 Respuesta del servidor:', data);
                 
                 if (data.success) {
