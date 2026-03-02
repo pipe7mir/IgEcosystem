@@ -23,14 +23,14 @@ async function bootstrap() {
     logger: ['error', 'warn', 'log'],
   });
 
-  // ⚠️ CRITICAL: Configure body parser IMMEDIATELY after app creation, before any middleware
-  // This must be done to override NestJS default limits
-  app.use(express.json({ limit: '100mb' }));
-  app.use(express.urlencoded({ extended: true, limit: '100mb' }));
-  app.use(express.raw({ limit: '100mb' }));
+  // ⚠️ CRITICAL: Configure body parser IMMEDIATELY after app creation
+  // Set to 20MB to allow multipart file uploads with metadata
+  app.use(express.json({ limit: '20mb' }));
+  app.use(express.urlencoded({ extended: true, limit: '20mb' }));
+  app.use(express.raw({ limit: '20mb' }));
   
   // Log payload configuration
-  console.log('📦 Payload limit configured: 100MB');
+  console.log('📦 Payload limit configured: 20MB');
 
   // Health check endpoints BEFORE global prefix
   const httpAdapter = app.getHttpAdapter();

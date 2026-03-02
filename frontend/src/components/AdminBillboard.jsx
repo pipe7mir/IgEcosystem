@@ -4,13 +4,13 @@ import apiClient from '../api/client';
 import GlassCard from '../react-ui/components/GlassCard';
 import Button from '../react-ui/components/Button';
 import { theme } from '../react-ui/styles/theme';
-import useImageCompression from '../hooks/useImageCompression';
 
 /**
  * Componente AdminBillboard
  * -------------------------
  * Interfaz administrativa para gestionar la cartelera (Hero).
  * Permite subir imágenes locales, vincular videos y organizar el orden de aparición.
+ * Usa Multipart/FormData para uploads eficientes sin overhead de Base64 (33% extra).
  */
 const AdminBillboard = () => {
     // ESTADOS: Datos de la cartelera, control de carga y edición
@@ -18,9 +18,9 @@ const AdminBillboard = () => {
     const [loading, setLoading] = useState(true);
     const [editingItem, setEditingItem] = useState(null);
     const [selectedFile, setSelectedFile] = useState(null);
+    const [previewUrl, setPreviewUrl] = useState(null);
     const [uploading, setUploading] = useState(false);
     const [showPreview, setShowPreview] = useState(false);
-    const { compressImage, validateCompressedImage } = useImageCompression();
     const [formData, setFormData] = useState({
         title: '',
         description: '',
@@ -75,6 +75,7 @@ const AdminBillboard = () => {
     const handleReset = () => {
         setEditingItem(null);
         setSelectedFile(null);
+        setPreviewUrl(null);
         setFormData({
             title: '',
             description: '',
@@ -91,35 +92,19 @@ const AdminBillboard = () => {
     };
 
     /**
-     * Convierte un archivo de imagen a Base64 altamente comprimido
-     * Usa browser-image-compression para reducción más agresiva y profesional
-     * Objetivo: < 900KB en Base64 para evitar Error 413
+     * Limpia la vista previa cuando se desmonta el componente
      */
-    const convertImageToBase64 = async (file) => {
-        const result = await compressImage(file, {
-            maxSizeMB: 0.9,           // < 900KB
-            maxWidthOrHeight: 1280,   // 1280x720 Hero resolution
-            initialQuality: 0.75,     // JPEG quality
-            useWebWorker: true,       // Non-blocking
-        });
-
-        if (!result.success) {
-            throw new Error('Compression failed');
-        }
-
-        // Validar que está dentro de límites seguros
-        const validation = validateCompressedImage(result.base64);
-        if (!validation.valid) {
-            console.warn(`⚠️ ${validation.reason}`);
-        }
-
-        console.log(`✅ Imagen comprimida: ${result.compressedSizeKB}KB (reducción: ${result.reductionPercent}%)`);
-        return result.base64;
-    };
+    useEffect(() => {
+        return () => {
+            if (previewUrl && previewUrl.startsWith('blob:')) {
+                URL.revokeObjectURL(previewUrl);
+            }
+        };
+    }, [previewUrl]);
 
     /**
      * Envía los datos a la API (Creación o Actualización)
-     * Usa Base64 para imágenes de alta calidad (similar a anuncios)
+     * Usa Multipart/FormData para upload eficiente sin overhead de Base64
      */
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -128,13 +113,18 @@ const AdminBillboard = () => {
             setUploading(true);
             let mediaUrl = formData.media_url;
 
-            // Si hay archivo seleccionado, convertirlo a base64 y subirlo
+            // Si hay archivo seleccionado, subirlo como Multipart
             if (selectedFile) {
-                console.log('📤 Subiendo imagen:', selectedFile.name);
-                const imageBase64 = await convertImageToBase64(selectedFile);
-                console.log('📸 Base64 generado, tamaño:', (imageBase64.length / 1024).toFixed(1) + 'KB');
+                console.log('📤 Subiendo imagen:', selectedFile.name, `(${(selectedFile.size / 1024 / 1024).toFixed(2)}MB)`);
                 
-                const { data } = await apiClient.post('/billboards/upload-image', { imageBase64 });
+                const uploadFormData = new FormData();
+                uploadFormData.append('image', selectedFile);
+
+                const { data } = await apiClient.post('/billboards/upload-image', uploadFormData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data'
+                    }
+                });
 
                 console.log('📥 Respuesta del servidor:', data);
                 
@@ -199,7 +189,7 @@ const AdminBillboard = () => {
      * Renderiza la vista previa del Hero con los datos actuales del formulario
      */
     const renderPreview = () => {
-        const previewUrl = normalizeMediaUrl(formData.media_url);
+        const displayUrl = previewUrl || normalizeMediaUrl(formData.media_url);
         
         return (
             <AnimatePresence>
@@ -245,7 +235,7 @@ const AdminBillboard = () => {
                     {/* Fondo */}
                     <div style={{
                         position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
-                        backgroundImage: previewUrl ? `url(${previewUrl})` : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        backgroundImage: displayUrl ? `url(${displayUrl})` : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                         backgroundSize: 'cover', backgroundPosition: 'center'
                     }} />
 
@@ -419,22 +409,36 @@ const AdminBillboard = () => {
                                     id="mediaFile"
                                     className="form-control"
                                     accept="image/*"
-                                    onChange={async (e) => {
+                                    onChange={(e) => {
                                         const file = e.target.files[0];
                                         if (file) {
+                                            // Validar tamaño
+                                            if (file.size > 20 * 1024 * 1024) {
+                                                alert('La imagen no debe exceder 20MB');
+                                                return;
+                                            }
+
                                             setSelectedFile(file);
                                             setFormData({ ...formData, media_type: 'image' });
                                             
-                                            // Crear vista previa comprimida (igual a la que se subirá)
-                                            const compressedBase64 = await convertImageToBase64(file);
-                                            setFormData(prev => ({ ...prev, media_url: compressedBase64 }));
+                                            // Crear vista previa con URL.createObjectURL (sin overhead de Base64)
+                                            const objectUrl = URL.createObjectURL(file);
+                                            setPreviewUrl(objectUrl);
+
+                                            console.log(`✅ Archivo seleccionado: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
                                         }
                                     }}
                                 />
                                 <small className="text-primary d-block mt-1">
                                     <i className="bi bi-info-circle me-1"></i>
-                                    Max <strong>1280x720px</strong> (16:9). Compresión ultra: <strong>JPEG 50%</strong> (~40-60KB).
+                                    Max <strong>20MB</strong> (JPEG, PNG, WebP). Sin overhead de Base64.
                                 </small>
+                                {selectedFile && (
+                                    <small className="text-success d-block mt-1">
+                                        <i className="bi bi-check-circle me-1"></i>
+                                        {selectedFile.name} ({(selectedFile.size / 1024 / 1024).toFixed(2)}MB)
+                                    </small>
+                                )}
                             </div>
                             <div>
                                 <label className="form-label small fw-bold text-muted" style={{ fontSize: '0.75rem' }}>
@@ -511,7 +515,7 @@ const AdminBillboard = () => {
                                     type="button"
                                     variant="outline"
                                     onClick={() => setShowPreview(true)}
-                                    disabled={!formData.title && !formData.media_url}
+                                    disabled={!formData.title && !formData.media_url && !previewUrl}
                                     title="Vista Previa del Hero"
                                 >
                                     <i className="bi bi-eye-fill"></i>
