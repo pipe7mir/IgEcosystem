@@ -77,9 +77,8 @@ COPY --from=builder-backend /app/backend/package.json ./backend/
 COPY --from=builder-frontend /app/frontend/dist ./frontend/dist
 COPY --from=builder-frontend /app/frontend/package.json ./frontend/
 
-# Copy environment files and configs
-COPY backend/.env* ./backend/ 2>/dev/null || true
-COPY .env* ./ 2>/dev/null || true
+# Note: .env files are optional and loaded from Railway/environment variables
+# These COPY commands will be ignored in CI/CD if files don't exist locally
 
 # ============================================================================
 # ⚠️ CRITICAL CONFIG - Nginx + Express Payload Limits
