@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import apiClient from '../api/client';
 import GlassCard from '../react-ui/components/GlassCard';
 import Button from '../react-ui/components/Button';
@@ -183,23 +184,32 @@ const AdminBillboard = () => {
         const previewUrl = normalizeMediaUrl(formData.media_url);
         
         return (
-            <div 
-                onClick={() => setShowPreview(false)}
-                style={{
-                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                    background: 'rgba(0,0,0,0.9)', zIndex: 9999,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    padding: '20px'
-                }}
-            >
-                <div 
-                    onClick={e => e.stopPropagation()}
+            <AnimatePresence>
+                <motion.div 
+                    onClick={() => setShowPreview(false)}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
                     style={{
-                        width: '100%', maxWidth: '1400px', height: '80vh',
-                        position: 'relative', borderRadius: '20px', overflow: 'hidden',
-                        boxShadow: '0 20px 60px rgba(0,0,0,0.5)'
+                        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                        background: 'rgba(0,0,0,0.95)', zIndex: 9999,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        padding: '20px',
+                        backdropFilter: 'blur(10px)'
                     }}
                 >
+                    <motion.div 
+                        onClick={e => e.stopPropagation()}
+                        initial={{ scale: 0.9, y: 50 }}
+                        animate={{ scale: 1, y: 0 }}
+                        transition={{ type: 'spring', damping: 25 }}
+                        style={{
+                            width: '100%', maxWidth: '1400px', height: '80vh',
+                            position: 'relative', borderRadius: '20px', overflow: 'hidden',
+                            boxShadow: '0 25px 80px rgba(102, 126, 234, 0.4)',
+                            border: `2px solid ${theme.colors.primary}`
+                        }}
+                    >
                     {/* Botón cerrar */}
                     <button
                         onClick={() => setShowPreview(false)}
@@ -276,8 +286,12 @@ const AdminBillboard = () => {
                     </div>
 
                     {/* Badge de vista previa */}
-                    <div style={{
-                        position: 'absolute', bottom: '20px', right: '20px',
+                    <motion.div 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.3 }}
+                        style={{
+                            position: 'absolute', bottom: '20px', right: '20px',
                         background: 'rgba(255,255,255,0.2)',
                         backdropFilter: 'blur(10px)',
                         padding: '8px 16px',
@@ -286,21 +300,35 @@ const AdminBillboard = () => {
                         fontSize: '0.85rem',
                         fontWeight: '600'
                     }}>
-                        <i className="bi bi-eye me-2"></i>Vista Previa
-                    </div>
-                </div>
-            </div>
+                            <i className="bi bi-eye me-2"></i>Vista Previa
+                    </motion.div>
+                    </motion.div>
+                </motion.div>
+            </AnimatePresence>
         );
     };
 
     return (
         <div style={{ padding: '20px' }}>
             <div className="d-flex justify-content-between align-items-center mb-4">
-                <h2 style={{ fontFamily: 'ModernAge, sans-serif', color: theme.colors.primary }}>
-                    <i className="bi bi-card-image me-2"></i>Gestor de Cartelera (Hero)
+                <h2 style={{ 
+                    fontFamily: 'ModernAge, sans-serif', 
+                    background: `linear-gradient(135deg, ${theme.colors.primary}, ${theme.colors.secondary})`,
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    fontWeight: 'bold',
+                    fontSize: '2rem'
+                }}>
+                    <i className="bi bi-images" style={{ 
+                        background: `linear-gradient(135deg, ${theme.colors.primary}, ${theme.colors.secondary})`,
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent'
+                    }}></i> Cartelera Hero
                 </h2>
                 {editingItem && (
-                    <Button variant="outline" onClick={handleReset}>Cancelar Edición</Button>
+                    <Button variant="outline" onClick={handleReset}>
+                        <i className="bi bi-x-circle me-1"></i>Cancelar
+                    </Button>
                 )}
             </div>
 
@@ -308,10 +336,15 @@ const AdminBillboard = () => {
                 {/* Form Section */}
                 <div className="col-lg-5">
                     <GlassCard style={{ padding: '40px' }}>
-                        <h4 className="mb-4">{editingItem ? 'Editar Diapositiva' : 'Nueva Diapositiva'}</h4>
+                        <h5 className="mb-4 fw-bold" style={{ color: theme.colors.primary }}>
+                            <i className={`bi ${editingItem ? 'bi-pencil-square' : 'bi-plus-circle'} me-2`}></i>
+                            {editingItem ? 'Editar' : 'Nueva'}
+                        </h5>
                         <form onSubmit={handleSubmit} className="d-flex flex-column gap-3">
                             <div>
-                                <label className="form-label small text-uppercase fw-bold">Título (Hero)</label>
+                                <label className="form-label small fw-bold" style={{ fontSize: '0.75rem' }}>
+                                    <i className="bi bi-type me-1"></i>TÍTULO
+                                </label>
                                 <input
                                     type="text"
                                     className="form-control"
@@ -321,7 +354,9 @@ const AdminBillboard = () => {
                                 />
                             </div>
                             <div>
-                                <label className="form-label small text-uppercase fw-bold">Descripción</label>
+                                <label className="form-label small fw-bold" style={{ fontSize: '0.75rem' }}>
+                                    <i className="bi bi-text-paragraph me-1"></i>DESCRIPCIÓN
+                                </label>
                                 <textarea
                                     className="form-control"
                                     rows="3"
@@ -332,7 +367,9 @@ const AdminBillboard = () => {
                             </div>
                             <div className="row">
                                 <div className="col-md-6">
-                                    <label className="form-label small text-uppercase fw-bold">Tipo de Medio</label>
+                                    <label className="form-label small fw-bold" style={{ fontSize: '0.75rem' }}>
+                                        <i className="bi bi-collection-play me-1"></i>TIPO
+                                    </label>
                                     <select
                                         className="form-select"
                                         value={formData.media_type}
@@ -343,7 +380,9 @@ const AdminBillboard = () => {
                                     </select>
                                 </div>
                                 <div className="col-md-6">
-                                    <label className="form-label small text-uppercase fw-bold">Orden (1-5)</label>
+                                    <label className="form-label small fw-bold" style={{ fontSize: '0.75rem' }}>
+                                        <i className="bi bi-sort-numeric-down me-1"></i>ORDEN
+                                    </label>
                                     <input
                                         type="number"
                                         className="form-control"
@@ -354,7 +393,9 @@ const AdminBillboard = () => {
                                 </div>
                             </div>
                             <div>
-                                <label className="form-label small text-uppercase fw-bold">Imagen de Fondo (Local)</label>
+                                <label className="form-label small fw-bold" style={{ fontSize: '0.75rem' }}>
+                                    <i className="bi bi-image me-1"></i>IMAGEN
+                                </label>
                                 <input
                                     type="file"
                                     id="mediaFile"
@@ -382,7 +423,9 @@ const AdminBillboard = () => {
                                 </small>
                             </div>
                             <div>
-                                <label className="form-label small text-uppercase fw-bold text-muted">O URL de Imagen / Video</label>
+                                <label className="form-label small fw-bold text-muted" style={{ fontSize: '0.75rem' }}>
+                                    <i className="bi bi-link-45deg me-1"></i>URL ALTERNATIVA
+                                </label>
                                 <input
                                     type="text"
                                     className="form-control"
@@ -394,7 +437,9 @@ const AdminBillboard = () => {
                             </div>
                             <div className="row">
                                 <div className="col-md-6">
-                                    <label className="form-label small text-uppercase fw-bold">Texto Botón</label>
+                                    <label className="form-label small fw-bold" style={{ fontSize: '0.75rem' }}>
+                                        <i className="bi bi-cursor me-1"></i>TEXTO BOTÓN
+                                    </label>
                                     <input
                                         type="text"
                                         className="form-control"
@@ -404,7 +449,9 @@ const AdminBillboard = () => {
                                     />
                                 </div>
                                 <div className="col-md-6">
-                                    <label className="form-label small text-uppercase fw-bold">Link Botón</label>
+                                    <label className="form-label small fw-bold" style={{ fontSize: '0.75rem' }}>
+                                        <i className="bi bi-box-arrow-up-right me-1"></i>LINK BOTÓN
+                                    </label>
                                     <input
                                         type="text"
                                         className="form-control"
@@ -422,7 +469,9 @@ const AdminBillboard = () => {
                                     checked={formData.is_active}
                                     onChange={e => setFormData({ ...formData, is_active: e.target.checked })}
                                 />
-                                <label className="form-check-label" htmlFor="isActive">Diapositiva Activa</label>
+                                <label className="form-check-label" htmlFor="isActive">
+                                    <i className="bi bi-toggle-on me-1"></i>Diapositiva Activa
+                                </label>
                             </div>
                             
                             <div className="d-flex gap-2 mt-3">
@@ -430,14 +479,18 @@ const AdminBillboard = () => {
                                     type="submit" 
                                     disabled={uploading}
                                     style={{ flex: 1 }}
+                                    title={uploading ? "Subiendo..." : (editingItem ? "Actualizar" : "Crear")}
                                 >
                                     {uploading ? (
                                         <>
-                                            <span className="spinner-border spinner-border-sm me-2"></span>
-                                            Subiendo...
+                                            <span className="spinner-border spinner-border-sm me-1"></span>
+                                            <i className="bi bi-cloud-arrow-up"></i>
                                         </>
                                     ) : (
-                                        editingItem ? 'Actualizar Cartelera' : 'Crear Nueva Cartelera'
+                                        <>
+                                            <i className={`bi ${editingItem ? 'bi-arrow-repeat' : 'bi-plus-circle'} me-1`}></i>
+                                            {editingItem ? 'Actualizar' : 'Crear'}
+                                        </>
                                     )}
                                 </Button>
                                 <Button 
@@ -445,9 +498,17 @@ const AdminBillboard = () => {
                                     variant="outline"
                                     onClick={() => setShowPreview(true)}
                                     disabled={!formData.title && !formData.media_url}
-                                    title="Vista Previa"
+                                    title="Vista Previa del Hero"
                                 >
-                                    <i className="bi bi-eye"></i>
+                                    <i className="bi bi-eye-fill"></i>
+                                </Button>
+                                <Button 
+                                    type="button"
+                                    variant="secondary"
+                                    onClick={handleReset}
+                                    title="Limpiar formulario"
+                                >
+                                    <i className="bi bi-x-circle"></i>
                                 </Button>
                             </div>
                         </form>
@@ -462,36 +523,145 @@ const AdminBillboard = () => {
                                 <div className="spinner-border text-primary" role="status"></div>
                             </div>
                         ) : billboards.length === 0 ? (
-                            <div className="col-12 text-center py-5 text-muted">
-                                No hay elementos en la cartelera. Crea el primero a la izquierda.
-                            </div>
-                        ) : billboards.map(item => (
-                            <div key={item.id} className="col-12">
-                                <GlassCard style={{ padding: '20px', borderLeft: `5px solid ${item.is_active ? theme.colors.primary : '#ccc'}` }}>
+                            <motion.div 
+                                className="col-12 text-center py-5"
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                            >
+                                <div style={{
+                                    background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1))',
+                                    borderRadius: '20px',
+                                    padding: '40px',
+                                    border: `2px dashed ${theme.colors.primary}`
+                                }}>
+                                    <i className="bi bi-images" style={{ fontSize: '3rem', color: theme.colors.primary, opacity: 0.5 }}></i>
+                                    <p className="text-muted mt-3 mb-0">
+                                        <i className="bi bi-arrow-left me-2"></i>
+                                        Crea tu primera diapositiva
+                                    </p>
+                                </div>
+                            </motion.div>
+                        ) : billboards.map((item, idx) => (
+                            <motion.div 
+                                key={item.id} 
+                                className="col-12"
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: idx * 0.05 }}
+                            >
+                                <GlassCard style={{ 
+                                    padding: '16px', 
+                                    borderLeft: `4px solid ${item.is_active ? theme.colors.primary : '#6c757d'}`,
+                                    cursor: 'pointer',
+                                    transition: 'all 0.3s'
+                                }}>
                                     <div className="d-flex gap-3">
-                                        <div style={{ width: '120px', height: '80px', borderRadius: '8px', overflow: 'hidden', background: '#000', flexShrink: 0 }}>
+                                        <div style={{ 
+                                            width: '140px', 
+                                            height: '90px', 
+                                            borderRadius: '12px', 
+                                            overflow: 'hidden', 
+                                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 
+                                            flexShrink: 0,
+                                            position: 'relative'
+                                        }}>
                                             {item.media_type === 'image' ? (
-                                                <img src={item.media_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                            ) : (
-                                                <div className="w-100 h-100 d-flex align-items-center justify-content-center text-white">
-                                                    <i className="bi bi-play-circle-fill fs-3"></i>
-                                                </div>
-                                            )}
+                                                <img 
+                                                    src={item.media_url} 
+                                                    alt="" 
+                                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                                                    onError={(e) => {
+                                                        e.target.style.display = 'none';
+                                                        e.target.nextSibling.style.display = 'flex';
+                                                    }}
+                                                />
+                                            ) : null}
+                                            <div 
+                                                className="w-100 h-100 d-flex align-items-center justify-content-center text-white position-absolute top-0 start-0"
+                                                style={{ display: item.media_type === 'video' ? 'flex' : 'none', background: 'rgba(0,0,0,0.5)' }}
+                                            >
+                                                <i className="bi bi-play-circle-fill fs-2"></i>
+                                            </div>
+                                            {/* Badge de tipo */}
+                                            <div style={{
+                                                position: 'absolute',
+                                                top: '8px',
+                                                right: '8px',
+                                                background: 'rgba(0,0,0,0.6)',
+                                                backdropFilter: 'blur(10px)',
+                                                borderRadius: '8px',
+                                                padding: '2px 8px',
+                                                fontSize: '0.7rem',
+                                                color: '#fff'
+                                            }}>
+                                                <i className={`bi ${item.media_type === 'video' ? 'bi-play-btn' : 'bi-image'} me-1`}></i>
+                                            </div>
                                         </div>
                                         <div className="flex-grow-1">
-                                            <div className="d-flex justify-content-between">
-                                                <h5 className="mb-1">{item.title || 'Sin Título'}</h5>
-                                                <span className="badge bg-light text-dark">Slot {item.order}</span>
+                                            <div className="d-flex justify-content-between align-items-start mb-1">
+                                                <h6 className="mb-0 fw-bold" style={{ color: theme.colors.text }}>
+                                                    {item.title || 'Sin Título'}
+                                                </h6>
+                                                <div className="d-flex gap-1 align-items-center">
+                                                    {item.is_active && (
+                                                        <span 
+                                                            className="badge" 
+                                                            style={{ 
+                                                                background: `linear-gradient(135deg, ${theme.colors.primary}, ${theme.colors.secondary})`,
+                                                                fontSize: '0.65rem'
+                                                            }}
+                                                        >
+                                                            <i className="bi bi-circle-fill me-1" style={{ fontSize: '0.5rem' }}></i>
+                                                            Activo
+                                                        </span>
+                                                    )}
+                                                    <span 
+                                                        className="badge bg-light text-dark"
+                                                        style={{ fontSize: '0.65rem' }}
+                                                        title="Orden de aparición"
+                                                    >
+                                                        #{item.order}
+                                                    </span>
+                                                </div>
                                             </div>
-                                            <p className="small text-muted mb-2 text-truncate" style={{ maxWidth: '300px' }}>{item.description || 'Sin descripción'}</p>
+                                            <p className="small text-muted mb-2 text-truncate" style={{ maxWidth: '400px', fontSize: '0.8rem' }}>
+                                                {item.description || 'Sin descripción'}
+                                            </p>
+                                            {item.button_text && (
+                                                <div className="mb-2">
+                                                    <span className="badge bg-secondary" style={{ fontSize: '0.7rem' }}>
+                                                        <i className="bi bi-mouse me-1"></i>{item.button_text}
+                                                    </span>
+                                                </div>
+                                            )}
                                             <div className="d-flex gap-2">
-                                                <button className="btn btn-sm btn-outline-primary" onClick={() => handleEdit(item)}>Editar</button>
-                                                <button className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(item.id)}>Eliminar</button>
+                                                <button 
+                                                    className="btn btn-sm px-3" 
+                                                    onClick={() => handleEdit(item)}
+                                                    style={{
+                                                        background: `linear-gradient(135deg, ${theme.colors.primary}, ${theme.colors.secondary})`,
+                                                        border: 'none',
+                                                        color: '#fff',
+                                                        borderRadius: '8px',
+                                                        fontSize: '0.8rem'
+                                                    }}
+                                                    title="Editar diapositiva"
+                                                >
+                                                    <i className="bi bi-pencil-square"></i>
+                                                </button>
+                                                <button 
+                                                    className="btn btn-sm btn-outline-danger px-3" 
+                                                    onClick={() => handleDelete(item.id)}
+                                                    style={{ borderRadius: '8px', fontSize: '0.8rem' }}
+                                                    title="Eliminar diapositiva"
+                                                >
+                                                    <i className="bi bi-trash3"></i>
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
                                 </GlassCard>
-                            </div>
+                            </motion.div>
                         ))}
                     </div>
                 </div>
