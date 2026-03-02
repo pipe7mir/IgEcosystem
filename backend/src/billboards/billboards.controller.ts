@@ -67,11 +67,10 @@ export class BillboardsController {
       const filePath = path.join(uploadsDir, filename);
       fs.writeFileSync(filePath, buffer);
 
-      const apiBaseUrl = process.env.API_BASE_URL || 'http://localhost:3000';
-      const fullUrl = `${apiBaseUrl}/uploads/${filename}`;
-      console.log(`💾 Local billboard saved, returning URL: ${fullUrl}`);
+      const relativeUrl = `/uploads/${filename}`;
+      console.log(`💾 Local billboard saved, returning relative path: ${relativeUrl}`);
 
-      return { success: true, imageUrl: fullUrl };
+      return { success: true, imageUrl: relativeUrl };
     } catch (error: any) {
       console.error('❌ Error in /billboards/upload-image:', error.message);
       throw new HttpException(

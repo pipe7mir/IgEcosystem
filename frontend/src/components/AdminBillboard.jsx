@@ -181,11 +181,14 @@ const AdminBillboard = () => {
             let mediaUrl = formData.media_url;
 
             if (selectedFile) {
-                console.log('📤 Subiendo imagen a Cloudinary (Sistema de Anuncios)...');
+                console.log('📤 Preparando imagen para subida...');
+
+                // Convertir archivo a base64 (necesario tanto para Cloudinary como para el Backend)
+                const base64Data = await fileToBase64(selectedFile);
+                console.log('📸 Imagen convertida a Base64, tamaño:', (base64Data.length / 1024).toFixed(1), 'KB');
 
                 try {
-                    // Convertir archivo a base64 tal como hace el sistema de anuncios
-                    const base64Data = await fileToBase64(selectedFile);
+                    console.log('☁️ Intentando subida directa a Cloudinary...');
 
                     // Subir directamente a Cloudinary usando el servicio configurado
                     const uploadResult = await uploadToCloudinary(base64Data, 'hero-billboards');
@@ -197,7 +200,7 @@ const AdminBillboard = () => {
                         throw new Error(uploadResult.error || 'Fallo en Cloudinary');
                     }
                 } catch (err) {
-                    console.error('❌ Error en subida directa, intentando backend:', err);
+                    console.error('❌ Error en subida directa, intentando backend fallback:', err);
 
                     // Fallback al backend usando Base64 si Cloudinary directo falla
                     const { data } = await apiClient.post('/billboards/upload-image', {
