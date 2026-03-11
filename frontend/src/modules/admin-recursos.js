@@ -364,12 +364,12 @@ const adminRecursosController = {
                         <div class="img-preview-mini me-3 shadow-sm border rounded bg-light" 
                              style="width:45px; height:45px; overflow:hidden;">
                             ${rec.thumbnail_url
-        ? `<img src="${sanitizeHTML(rec.thumbnail_url)}" 
+    ? `<img src="${sanitizeHTML(rec.thumbnail_url)}" 
                                         style="width:100%; height:100%; object-fit:cover;" 
                                         loading="lazy" 
                                         alt="${titulo}">`
-        : '<i class="bi bi-box-seam text-muted d-flex justify-content-center pt-2"></i>'
-      }
+    : '<i class="bi bi-box-seam text-muted d-flex justify-content-center pt-2"></i>'
+}
                         </div>
                         <div>
                             <div class="fw-bold text-dark small">${titulo}</div>

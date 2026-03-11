@@ -145,11 +145,11 @@ function renderResourceCards(grid, recursos) {
                     
                     <div class="card-visual">
                         ${rec.thumbnail_url
-          ? `<img src="${sanitizeHTML(rec.thumbnail_url)}" 
+    ? `<img src="${sanitizeHTML(rec.thumbnail_url)}" 
                                     loading="lazy" 
                                     class="img-fluid rounded-4 shadow"
                                     alt="${title}">`
-          : `<div class="placeholder-icon"><i class="bi ${actionIcon}"></i></div>`}
+    : `<div class="placeholder-icon"><i class="bi ${actionIcon}"></i></div>`}
                     </div>
 
                     <div class="card-content">

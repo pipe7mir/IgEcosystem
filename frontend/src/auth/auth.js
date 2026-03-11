@@ -31,7 +31,7 @@ export async function renderAuth() {
     // Si es admin, redirigir al panel
     if (user.role === 'admin') {
       setTimeout(() => window.location.hash = '#admin', 100);
-      return `<div class="text-center py-5 mt-5"><div class="spinner-border text-primary"></div><p class="mt-2">Redirigiendo al panel...</p></div>`;
+      return '<div class="text-center py-5 mt-5"><div class="spinner-border text-primary"></div><p class="mt-2">Redirigiendo al panel...</p></div>';
     }
     // Si es usuario normal, mantener en home o perfil (opcional)
     // Por ahora, permitimos ver el login solo si no es admin, o redirigimos a home?
